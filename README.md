@@ -6,6 +6,8 @@ The advent of the various large-scale genomics data especially The Cancer Genome
 Using the website, you can identify the cancer driver genes (TSGs and OGs) based on confident molecular profiling. The default parameter provides a convinent cancer driver gene list with TSG or OG role. Furthermore, one can also customize the prediction  by altering the parameters.
 
 ## Resources
+
+* Codes to test the DORGE machine-learning model used in the DORGE paper can be found at DORGE.html
 * Codes to reproduce figures and tables used in DORGE paper can be found at https://github.com/biocq/DORGE_codes
 * Codes to obtain the feature profile used in DORGE paper can be found at https://github.com/biocq/DORGE_pipeline
 * Codes to visualize the prediction by Shiny app can be found at https://github.com/biocq/DORGE_shiny
