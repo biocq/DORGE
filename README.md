@@ -7,7 +7,7 @@ Using the website, you can identify the cancer driver genes (TSGs and OGs) based
 
 ## Resources
 
-* Codes to test the DORGE machine-learning model used in the DORGE paper can be found at DORGE.html
+* Codes to test the DORGE machine-learning model used in the DORGE paper can be found at the DORGE.html
 * Codes to reproduce figures and tables used in DORGE paper can be found at https://github.com/biocq/DORGE_codes
 * Codes to obtain the feature profile used in DORGE paper can be found at https://github.com/biocq/DORGE_pipeline
 * Codes to visualize the prediction by Shiny app can be found at https://github.com/biocq/DORGE_shiny
