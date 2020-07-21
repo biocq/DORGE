@@ -21,7 +21,7 @@ Please cite the paper (DORGE: Discovery of Oncogenes and Tumor SuppressoR Genes 
 ## Changelog
 *  April 4. Update the README page.
 *  April 27. Update the README page.
-*  Jul 20. Update the README page.
+*  July 20. Update the README page.
 
 ## Issues
 
