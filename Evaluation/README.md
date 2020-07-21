@@ -5,8 +5,6 @@
 https://figshare.com/articles/online_resource/Evaluation_processing_new_zip/12679160
 
 
-## Steps:
-
 ## Dependency
 
 R (https://cran.r-project.org/)
@@ -17,6 +15,7 @@ Java SDK: Sun Java SE Development Kit 7 or higher (Links of JDK 8 https://www.or
 
 As a convenience way, Bioconda users may also try 'conda install -c bioconda java-jdk' to install Java easily.
 
+## Steps
 
 1a. CDS BED file generation
 ```
