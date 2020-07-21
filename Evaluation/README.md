@@ -7,8 +7,6 @@ https://figshare.com/articles/online_resource/Evaluation_processing_new_zip/1267
 
 ## Dependency
 
-R (https://cran.r-project.org/)
-
 Java v1.8.0, bedops v2.4.39, bedtools v2.29.2
 
 Java SDK: Sun Java SE Development Kit 7 or higher (Links of JDK 8 https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html) is needed. Setting JAVA_HOME may also be needed to launch Java at any folders(see http://www.sajeconsultants.com/how-to-set-java_home-on-mac-os-x/?utm_source=rss&utm_medium=rss&utm_campaign=how-to-set-java_home-on-mac-os-x).
