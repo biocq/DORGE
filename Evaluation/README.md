@@ -1,8 +1,10 @@
-# Codes used for prediction evaluation
+# Codes used for evaluation of DORGE prediction
 
-## Codes to process evaluation data can be found at
+## Codes to process evaluation data can be found at:
 
 https://figshare.com/articles/online_resource/Evaluation_processing_new_zip/12679160
+
+
 Steps:
 
 ## Dependency
