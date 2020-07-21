@@ -1,7 +1,8 @@
 # Codes used for prediction evaluation
 
-## Codes to process evaluation data can be found at https://figshare.com/articles/online_resource/Evaluation_processing_new_zip/12679160
+## Codes to process evaluation data can be found at
 
+https://figshare.com/articles/online_resource/Evaluation_processing_new_zip/12679160
 Steps:
 
 ## Dependency
@@ -243,19 +244,3 @@ cd ..
   Input: EpiFactor_ER.csv #(ER genes in EpiFactor database)
 
   Output: ER_genes.txt #(Compiled ER gene list; Place at Figure_3/data/ in the DORGE_Codes project)
-  
-9. Noncoding mutation rate data processing
-```
-cd MutsigCV_data
-javac MutsigCV_processing.java
-java MutsigCV_processing
-cd ..
-```
-
-  Input: MutsigCV_evaluation_data.txt #(data are Table S5 which can be downloaded from  https://www.nature.com/articles/nature12213)
-	
-	Input: Gene_set_new.txt #(Gene annotation information used by this study)
-
-  Input: ensembl_synonymous_to_symbol.txt #(Gene alias conversion to HGNC gene names)
-
-  Output: Noncoding_mutation_rate_processed.txt #(Processed noncoding mutation rate data; Place at Figure_3/data/ in the DORGE_Codes project)
