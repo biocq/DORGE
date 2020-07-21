@@ -5,7 +5,7 @@
 https://figshare.com/articles/online_resource/Evaluation_processing_new_zip/12679160
 
 
-Steps:
+## Steps:
 
 ## Dependency
 
@@ -32,8 +32,6 @@ java phyloP_Gene_CDS_gtf_generation
 
 1b. Generate phyloP46-gene association table (Optional; time-comsuming). Output: candidate_gene_exon_phyloP46.txt
 ```
-#also https://www.bioconductor.org/packages/release/bioc/vignettes/GenomicScores/inst/doc/GenomicScores.html
-
 see https://www.biostars.org/p/150152/
 wget -r -nc -A.wigFix.gz -nd -l1 -R "index.html*" -e robots=off http://hgdownload.cse.ucsc.edu/goldenPath/hg19/phyloP46way/vertebrate/
 for fn in `ls *.wigFix.gz`; do gunzip -c ${fn} | wig2bed - > ${fn}.bed; done
