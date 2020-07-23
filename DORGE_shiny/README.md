@@ -26,7 +26,7 @@ git clone https://github.com/biocq/DORGE.git
 ```
 * R software (https://www.r-project.org/) is needed.
 * The codes in [app.R](https://github.com/biocq/DORGE/blob/master/app.R) are the Shiny codes used for the [web viewer].
-* Please change the path of the folder that contains the files and set the path in app.R to the actual path: setwd("/Users/jlyu/DORGE").
+* Please change the path of the folder that contains the files and set the path in app.R to the actual path, for example: setwd("/your_home_directory/DORGE/DORGE_shiny").
 * If you find this website is helpful, you can use the code for your own projects. The list of dependencies is found at the top of the [app.R] file.
 
 ## Shiny app illustration
@@ -40,7 +40,7 @@ Using Shiny app, you can see/do:
 
 ## Citation
 
-Please cite the paper (DORGE: Discovery of Oncogenes and Tumor SuppressoR Genes Using Distinct Genetic and Epigenetic Features) if the resources are used elsewhere.
+Please cite the paper (DORGE: Discovery of Oncogenes and Tumor SuppressoR Genes Using Distinct Genetic and Epigenetic Features, https://www.biorxiv.org/content/10.1101/2020.07.21.213702v1) if the resources are used elsewhere.
 
 ## Changelog
 
