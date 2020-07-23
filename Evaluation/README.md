@@ -2,7 +2,7 @@
 
 ## Codes to process evaluation data can be found at:
 
-https://figshare.com/articles/online_resource/Evaluation_processing_new_zip/12679160
+https://figshare.com/articles/online_resource/Evaluation_data_processing/12693884
 
 
 ## Dependency
@@ -15,7 +15,7 @@ As a convenience way, Bioconda users may also try 'conda install -c bioconda jav
 
 ## Steps
 
-1a. CDS BED file generation
+1a. Exon BED file generation
 ```
 cd PhyloP
 unzip gencode.v19.annotation.gtf.zip
@@ -25,11 +25,11 @@ java phyloP_Gene_CDS_gtf_generation
 ```
   Input: gencode.v19.annotation.gtf #(Gencode v19 GTF annotation)
 
-  Output: compiled_exons_gene.bed #(CDS BED file)
+  Output: compiled_exons_gene.bed #(Exon BED file)
 
 1b. Generate phyloP46-gene association table (Optional; time-comsuming). Output: candidate_gene_exon_phyloP46.txt
 ```
-see https://www.biostars.org/p/150152/
+#see https://www.biostars.org/p/150152/
 wget -r -nc -A.wigFix.gz -nd -l1 -R "index.html*" -e robots=off http://hgdownload.cse.ucsc.edu/goldenPath/hg19/phyloP46way/vertebrate/
 for fn in `ls *.wigFix.gz`; do gunzip -c ${fn} | wig2bed - > ${fn}.bed; done
 bedops --everything chr*.bed > vertebrate.phyloP46.bed
@@ -172,8 +172,8 @@ cd ..
 5. shRNA data processing.
 ```
 cd shRNA
-javac -cp ../../Epigenetics_processing/replication_time/commons-math3-3.6.1.jar shRNA_median_dependency_score.java
-java -cp ../../Epigenetics_processing/replication_time/commons-math3-3.6.1.jar:. shRNA_median_dependency_score
+javac -cp commons-math3-3.6.1.jar shRNA_median_dependency_score.java
+java -cp commons-math3-3.6.1.jar:. shRNA_median_dependency_score
 cd ..
 ```
 
