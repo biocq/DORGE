@@ -16,7 +16,7 @@ For your convenience, illustrative codes of the DORGE machine-learning model use
 
 ## Citation
 
-Please cite the paper (DORGE: Discovery of Oncogenes and Tumor SuppressoR Genes Using Genetic and Epigenetic Features, now submitted to Science Advances) if the resources are used elsewhere.
+Please cite the paper (DORGE: Discovery of Oncogenes and Tumor SuppressoR Genes Using Genetic and Epigenetic Features, https://www.biorxiv.org/content/10.1101/2020.07.21.213702v1) if the resources are used elsewhere.
 
 ## Changelog
 *  April 4. Update the README page.
