@@ -1,0 +1,713 @@
+Sample_name	Cell_line
+ENCFF001VCR	K562
+ENCFF001VDB	NT2/D1
+ENCFF001VDE	Panc1
+ENCFF001VDG	Mononuclear cell
+ENCFF001WUN	A549
+ENCFF001WUO	A549
+ENCFF001WUR	AG04449
+ENCFF001WUS	AG04449
+ENCFF001WVD	AG04450
+ENCFF001WVE	AG04450
+ENCFF001WVH	AG09309
+ENCFF001WVI	AG09309
+ENCFF001WVL	AG09319
+ENCFF001WVM	AG09319
+ENCFF001WVP	AG10803
+ENCFF001WVQ	AG10803
+ENCFF001WVT	Fibroblast of the aortic adventitia
+ENCFF001WVU	Fibroblast of the aortic adventitia
+ENCFF001WVX	BE2C
+ENCFF001WVY	BE2C
+ENCFF001WWJ	BJ
+ENCFF001WWK	BJ
+ENCFF001WWV	Caco-2
+ENCFF001WWW	Caco-2
+ENCFF001WWZ	B cell
+ENCFF001WXA	B cell
+ENCFF001WXC	B cell
+ENCFF001WXN	GM06990
+ENCFF001WXO	GM06990
+ENCFF001WXR	GM12864
+ENCFF001WXS	GM12864
+ENCFF001WXV	GM12865
+ENCFF001WXW	GM12865
+ENCFF001WYA	GM12875
+ENCFF001WYL	GM12878
+ENCFF001WYM	GM12878
+ENCFF001WYP	Cardiac muscle cell
+ENCFF001WYQ	Cardiac muscle cell
+ENCFF001WYT	Mesodermal cell
+ENCFF001WYU	Mesodermal cell
+ENCFF001WYX	Cardiovascular progenitor cell
+ENCFF001WYY	Cardiovascular progenitor cell
+ENCFF001WZB	Cardiac myoblast
+ENCFF001WZC	Cardiac myoblast
+ENCFF001XAT	H7
+ENCFF001XAU	H7
+ENCFF001XAX	Astrocyte of the cerebellum
+ENCFF001XAY	Astrocyte of the cerebellum
+ENCFF001XBB	Astrocyte of the spinal cord
+ENCFF001XBC	Astrocyte of the spinal cord
+ENCFF001XBF	Brain microvascular endothelial cell
+ENCFF001XBG	Brain microvascular endothelial cell
+ENCFF001XBJ	Cardiac fibroblast
+ENCFF001XBK	Cardiac fibroblast
+ENCFF001XBM	Cardiac fibroblast
+ENCFF001XBP	Cardiac muscle cell
+ENCFF001XBQ	Cardiac muscle cell
+ENCFF001XBT	Choroid plexus epithelial cell
+ENCFF001XBU	Choroid plexus epithelial cell
+ENCFF001XBX	HCT116
+ENCFF001XBY	HCT116
+ENCFF001XCB	Epithelial cell of esophagus
+ENCFF001XCC	Epithelial cell of esophagus
+ENCFF001XCF	HEK293
+ENCFF001XCG	HEK293
+ENCFF001XCR	HeLa-S3 G1b phase
+ENCFF001XCS	HeLa-S3 G1b phase
+ENCFF001XDD	HepG2
+ENCFF001XDE	HepG2
+ENCFF001XDG	Foreskin fibroblast
+ENCFF001XDJ	HFF-Myc
+ENCFF001XDK	HFF-Myc
+ENCFF001XDN	HL-60
+ENCFF001XDO	HL-60
+ENCFF001XDT	Mammary epithelial cell
+ENCFF001XDU	Mammary epithelial cell
+ENCFF001XDX	Fibroblast of mammary gland
+ENCFF001XDY	Fibroblast of mammary gland
+ENCFF001XEB	Fibroblast of pulmonary artery
+ENCFF001XEC	Fibroblast of pulmonary artery
+ENCFF001XEF	Fibroblast of lung
+ENCFF001XEG	Fibroblast of lung
+ENCFF001XER	Kidney epithelial cell
+ENCFF001XES	Kidney epithelial cell
+ENCFF001XEV	Retinal pigment epithelial cell
+ENCFF001XEW	Retinal pigment epithelial cell
+ENCFF001XFI	Endothelial cell of umbilical vein
+ENCFF001XFL	Fibroblast of villous mesenchyme
+ENCFF001XFM	Fibroblast of villous mesenchyme
+ENCFF001XFP	Jurkat clone E61
+ENCFF001XFQ	Jurkat clone E61
+ENCFF001XGV	K562
+ENCFF001XGW	K562
+ENCFF001XGZ	LNCaP clone FGC
+ENCFF001XHA	LNCaP clone FGC
+ENCFF001XHC	MCF-7
+ENCFF001XHE	MCF-7
+ENCFF001XHG	CD14-positive monocyte
+ENCFF001XHK	NB4
+ENCFF001XHN	Foreskin fibroblast
+ENCFF001XHO	Foreskin fibroblast
+ENCFF001XHZ	Keratinocyte
+ENCFF001XIA	Keratinocyte
+ENCFF001XID	Fibroblast of lung
+ENCFF001XIE	Fibroblast of lung
+ENCFF001XIH	Panc1
+ENCFF001XII	Panc1
+ENCFF001XIL	Epithelial cell of proximal tubule
+ENCFF001XIM	Epithelial cell of proximal tubule
+ENCFF001XIX	Bronchial epithelial cell
+ENCFF001XIY	Bronchial epithelial cell
+ENCFF001XJB	Skeletal muscle cell
+ENCFF001XJC	Skeletal muscle cell
+ENCFF001XJF	SK-N-MC
+ENCFF001XJG	SK-N-MC
+ENCFF001XJR	SK-N-SH treated with 6 μM all-trans-retinoic acid for 48 hours
+ENCFF001XJS	SK-N-SH treated with 6 μM all-trans-retinoic acid for 48 hours
+ENCFF001XJV	WERI-Rb-1
+ENCFF001XJW	WERI-Rb-1
+ENCFF001XJZ	WI38
+ENCFF001XKA	WI38
+ENCFF001XKD	WI38
+ENCFF001XKE	WI38
+ENCFF006EFA	Adrenal gland
+ENCFF011JYW	Common myeloid progenitor, CD34-positive
+ENCFF012VNZ	Common myeloid progenitor, CD34-positive
+ENCFF019CWL	Bipolar neuron
+ENCFF019EWE	Naive thymus-derived CD4-positive, alpha-beta T cell
+ENCFF020PNT	GM23248
+ENCFF020UNT	Neutrophil
+ENCFF029IFG	Thymus
+ENCFF030HDB	Mesodermal cell
+ENCFF031FCF	Trophoblast cell
+ENCFF032FXB	CD4-positive, alpha-beta memory T cell
+ENCFF033PHE	Mammary epithelial cell
+ENCFF034TFR	BE2C
+ENCFF037HKH	GM12865
+ENCFF037LEH	AG04449
+ENCFF042BUV	Mucosa of stomach
+ENCFF044FNB	NT2/D1
+ENCFF046PQP	BJ
+ENCFF049MMM	B cell
+ENCFF057DVP	DOHH2
+ENCFF060MGG	Fibroblast of breast
+ENCFF062BKS	SK-N-SH treated with 6 μM all-trans-retinoic acid for 48 hours
+ENCFF063EAI	Retinal pigment epithelial cell
+ENCFF068UAA	GM12878
+ENCFF070FOE	IPS DF 6.9
+ENCFF075AQR	HL-60
+ENCFF078PHV	Muscle of trunk
+ENCFF079HCZ	Bronchial epithelial cell
+ENCFF084PQN	K562
+ENCFF086JDJ	CD4-positive, alpha-beta memory T cell
+ENCFF094STZ	HeLa-S3
+ENCFF101AFR	WI38
+ENCFF102MXI	HeLa-S3 G1b phase
+ENCFF103HKS	Placenta embryo 
+ENCFF104GWF	Caudate nucleus
+ENCFF104LAN	Heart
+ENCFF104NJJ	Aorta
+ENCFF107AVA	AG10803
+ENCFF107EVX	HL-60
+ENCFF114AAF	CD4-positive, CD25-positive, alpha-beta regulatory T cell
+ENCFF119RRG	Jurkat clone E61
+ENCFF120BSU	CD14-positive monocyte
+ENCFF120IZG	Skeletal muscle satellite cell
+ENCFF123KKT	HUES48
+ENCFF128BLQ	Amnion
+ENCFF128QZU	Thymus
+ENCFF128WJV	Peripheral blood mononuclear cell
+ENCFF129IHA	Body of pancreas
+ENCFF143ZEI	Large intestine
+ENCFF145DZX	GM08714
+ENCFF152AUP	WERI-Rb-1
+ENCFF152QBG	SK-N-SH
+ENCFF160VJE	IPS DF 19.11
+ENCFF165AET	Chorionic villus
+ENCFF168KNA	SK-N-SH
+ENCFF173WKM	Panc1
+ENCFF176UNG	Mucosa of stomach
+ENCFF176YCB	GM23248
+ENCFF187UKC	Hepatocyte
+ENCFF189CGV	Sigmoid colon
+ENCFF191MHO	Placenta
+ENCFF199JMZ	HeLa-S3
+ENCFF201KBA	HeLa-S3 G1b phase
+ENCFF202NNB	Layer of hippocampus
+ENCFF208NAK	Placenta
+ENCFF210VAN	Neurosphere
+ENCFF212KLE	Thymus
+ENCFF216VYE	Endocrine pancreas
+ENCFF221ZKT	T-cell
+ENCFF230BUV	Stomach
+ENCFF232XJA	PC-9
+ENCFF237SJE	A549 treated with 0.02% ethanol for 1 hour
+ENCFF238AYS	GM12878
+ENCFF239LEL	SK-N-SH treated with 6 μM all-trans-retinoic acid for 48 hours
+ENCFF241XDD	T-cell
+ENCFF244AEM	Colonic mucosa
+ENCFF247HCH	Common myeloid progenitor, CD34-positive
+ENCFF249MLW	MCF-7
+ENCFF253WGM	MCF-7
+ENCFF261REY	K562
+ENCFF273UNN	Myoepithelial cell of mammary gland
+ENCFF275WQS	LNCaP clone FGC
+ENCFF277COJ	IPS DF 19.11
+ENCFF280QNB	Keratinocyte
+ENCFF282LNM	K562
+ENCFF282PWJ	CD8-positive, alpha-beta T cell
+ENCFF282YKM	UCSF-4
+ENCFF283EDY	Caco-2
+ENCFF283QFH	Common myeloid progenitor, CD34-positive
+ENCFF292NGD	Stomach
+ENCFF292YSJ	Cardiac muscle cell
+ENCFF304FUM	CD4-positive, alpha-beta memory T cell
+ENCFF308QCX	Caco-2
+ENCFF309QDB	Sigmoid colon
+ENCFF313TAJ	WI38
+ENCFF314GKM	K562
+ENCFF316LZA	Chorionic villus embryo 
+ENCFF316XNP	Mammary epithelial cell
+ENCFF319OQP	Liver
+ENCFF320BLG	Liver
+ENCFF324VMF	Trophoblast cell
+ENCFF325TPC	IPS-11a
+ENCFF328PHY	CD4-positive, alpha-beta T cell treated with phorbol 13-acetate 12-myristate , ionomycin
+ENCFF336AOR	Skeletal muscle myoblast
+ENCFF337YDJ	Myoepithelial cell of mammary gland
+ENCFF345JCH	Common myeloid progenitor, CD34-positive
+ENCFF348BCT	Endocrine pancreas
+ENCFF349ISL	Fibroblast of lung
+ENCFF354NSJ	CD14-positive monocyte
+ENCFF358TTB	CD8-positive, alpha-beta memory T cell
+ENCFF360PXB	Mammary epithelial cell
+ENCFF368BLZ	GM12878
+ENCFF368TAO	Brain
+ENCFF370CVB	A549
+ENCFF370SGT	Peripheral blood mononuclear cell
+ENCFF378CBE	Cingulate gyrus
+ENCFF379WDR	Effector memory CD4-positive, alpha-beta T cell
+ENCFF380INR	GM12865
+ENCFF381RCI	Upper lobe of left lung
+ENCFF382WZJ	Mesendoderm
+ENCFF385DTB	Brain
+ENCFF386KUS	H9
+ENCFF386QZF	Neurosphere
+ENCFF395FWV	Aorta
+ENCFF396HIC	H7
+ENCFF397KEL	H1
+ENCFF402BJJ	PC-3
+ENCFF403NIO	HCT116
+ENCFF403OOI	Cardiovascular progenitor cell
+ENCFF404BRA	Myotube
+ENCFF406QTB	K562
+ENCFF408BXF	Small intestine
+ENCFF409WSB	Angular gyrus
+ENCFF409ZIR	Foreskin melanocyte
+ENCFF411VLT	HepG2
+ENCFF412GHV	T-cell
+ENCFF412ZGA	Brain
+ENCFF413QBE	UCSF-4
+ENCFF414GLB	Foreskin keratinocyte
+ENCFF416MGV	Small intestine
+ENCFF422CQH	HCT116
+ENCFF429CCM	HFF-Myc
+ENCFF434CRP	CD14-positive monocyte
+ENCFF442WNS	Brain
+ENCFF443DUZ	Common myeloid progenitor, CD34-positive
+ENCFF443LGC	Heart
+ENCFF445DFQ	Placental basal plate
+ENCFF446GWX	SK-N-MC
+ENCFF448CLX	B cell
+ENCFF451YEU	CD4-positive, alpha-beta T cell
+ENCFF459ESD	Mononuclear cell
+ENCFF460VIH	GM12878
+ENCFF462DKM	NCI-H929
+ENCFF462LGP	Skeletal muscle myoblast
+ENCFF464IUG	H1
+ENCFF468WWR	Panc1
+ENCFF471NKK	H7
+ENCFF474AMK	A549 treated with 100 nM dexamethasone for 1 hour
+ENCFF477ADG	IMR-90
+ENCFF480DUE	GM12864
+ENCFF482MWT	Aorta
+ENCFF484SSV	UCSF-4
+ENCFF486RQK	Mammary epithelial cell
+ENCFF489CEO	H9
+ENCFF489RQG	HCT116
+ENCFF496TMK	Effector memory CD4-positive, alpha-beta T cell
+ENCFF496WUV	IPS DF 19.11
+ENCFF497MBS	Pancreas
+ENCFF500HWL	SK-N-SH
+ENCFF513NXL	Loucy
+ENCFF517KFL	Skeletal muscle cell
+ENCFF518ODN	Foreskin keratinocyte
+ENCFF520MST	Thymus
+ENCFF523QIY	HEK293
+ENCFF525HAY	Amnion
+ENCFF525QEU	Large intestine
+ENCFF533CPZ	Chorion
+ENCFF534PLG	Panc1
+ENCFF538JPM	Neural stem progenitor cell
+ENCFF542GBR	HeLa-S3
+ENCFF547LOQ	GM06990
+ENCFF551FEL	Mesodermal cell
+ENCFF555YXZ	Osteoblast
+ENCFF557ORO	Muscle of trunk
+ENCFF557UBZ	T-cell
+ENCFF557ZZJ	SK-N-MC
+ENCFF564TFF	Mid-neurogenesis radial glial cells
+ENCFF567GMK	Sigmoid colon
+ENCFF571ARS	Naive thymus-derived CD4-positive, alpha-beta T cell
+ENCFF574YDV	Thyroid gland
+ENCFF576SCQ	Body of pancreas
+ENCFF585YXL	Chorion
+ENCFF591URJ	IMR-90
+ENCFF595PPS	Regulatory T cell
+ENCFF600ETT	B cell
+ENCFF603MPP	Spleen
+ENCFF606ETW	Neutrophil
+ENCFF608HZF	Mesenchymal stem cell
+ENCFF610TIN	A549
+ENCFF614FXN	Endocrine pancreas adult 
+ENCFF622KYJ	H1
+ENCFF623HWH	MM.1S
+ENCFF623XGW	Common myeloid progenitor, CD34-positive
+ENCFF624FWE	Retinal pigment epithelial cell
+ENCFF627TCC	GM08714
+ENCFF627VKQ	AG09309
+ENCFF629RGG	Skeletal muscle myoblast
+ENCFF634RUG	Keratinocyte
+ENCFF637OIU	WI38
+ENCFF641WRD	Adrenal gland
+ENCFF641XKN	MCF-7
+ENCFF642GQC	CD4-positive, alpha-beta T cell treated with phorbol 13-acetate 12-myristate , ionomycin
+ENCFF646JJX	AG04449
+ENCFF647IAX	Mammary epithelial cell
+ENCFF650EWL	Placental basal plate
+ENCFF655VOO	GM12864
+ENCFF657QNR	Neurosphere embryo 
+ENCFF657UUA	Myotube
+ENCFF659PCD	Skeletal muscle myoblast
+ENCFF663TJR	IPS DF 6.9
+ENCFF665YYQ	GM06990
+ENCFF666IXO	MCF-7
+ENCFF668BLZ	Common myeloid progenitor, CD34-positive
+ENCFF668DID	Neuron
+ENCFF672KST	IPS-18c
+ENCFF675LAN	Foreskin keratinocyte
+ENCFF675PAV	A549 treated with 100 nM dexamethasone for 1 hour
+ENCFF677JUC	PC-9
+ENCFF677UWW	Cingulate gyrus
+ENCFF680ACQ	Skeletal muscle satellite cell
+ENCFF680GXW	CD8-positive, alpha-beta memory T cell
+ENCFF681UMO	Foreskin melanocyte
+ENCFF682XDY	Cardiac muscle cell
+ENCFF684VLD	Natural killer cell
+ENCFF685ITQ	Natural killer cell
+ENCFF688HCU	MM.1S
+ENCFF692NCP	HepG2
+ENCFF695UOR	Foreskin melanocyte
+ENCFF695ZCD	H1
+ENCFF698RHA	K562
+ENCFF700SOH	Jurkat clone E61
+ENCFF708IKN	Thyroid gland
+ENCFF712CFO	Mesendoderm
+ENCFF712MSN	Adrenal gland
+ENCFF713IHA	Neurosphere embryo 
+ENCFF714QVX	Body of pancreas
+ENCFF714ZOO	CD8-positive, alpha-beta T cell
+ENCFF726ELZ	Hepatocyte
+ENCFF733GLZ	Keratinocyte
+ENCFF736XSR	WERI-Rb-1
+ENCFF743TLC	WI38
+ENCFF744HBO	IPS-20b
+ENCFF744RLR	Cardiovascular progenitor cell
+ENCFF744UMD	NCI-H929
+ENCFF748NGW	Keratinocyte
+ENCFF749VRD	IPS DF 6.9
+ENCFF750SIX	HCT116
+ENCFF750SNG	Neuroepithelial stem cell
+ENCFF753BAK	HepG2
+ENCFF753ZNY	Fibroblast of mammary gland
+ENCFF757WPX	K562
+ENCFF758NBC	SK-N-MC
+ENCFF759CFC	B cell
+ENCFF759SPZ	NT2/D1
+ENCFF761FDC	NB4
+ENCFF762UCO	Neurosphere
+ENCFF775BWF	Temporal lobe
+ENCFF779DOV	BJ
+ENCFF786APV	LNCaP clone FGC
+ENCFF790YTQ	A549 treated with 0.02% ethanol for 1 hour
+ENCFF792MMD	CD4-positive, CD25-positive, alpha-beta regulatory T cell
+ENCFF794IGN	T-helper 17 cell treated with phorbol 13-acetate 12-myristate , ionomycin
+ENCFF794TPT	Pancreas
+ENCFF797ZMR	Keratinocyte
+ENCFF800FGM	Mammary epithelial cell
+ENCFF800PYK	Neuron
+ENCFF801WND	K562
+ENCFF802QWI	B cell
+ENCFF805BQN	Sigmoid colon
+ENCFF807TUA	Neural cell
+ENCFF809TQT	Neural stem progenitor cell
+ENCFF810DXC	CD14-positive monocyte
+ENCFF811HDG	Spleen
+ENCFF815MUT	BE2C
+ENCFF816UNH	Small intestine
+ENCFF822UCR	Bronchial epithelial cell
+ENCFF823KVB	Transverse colon
+ENCFF831EQD	Neural stem progenitor cell
+ENCFF832HHG	Keratinocyte
+ENCFF832HOR	Transverse colon
+ENCFF839BGZ	Cardiac myoblast
+ENCFF842OUN	Thyroid gland
+ENCFF846OYE	Mesodermal cell
+ENCFF849NMW	Cerebellum
+ENCFF852UPO	Chorionic villus
+ENCFF855KWS	SK-N-SH
+ENCFF877PDN	Neural cell
+ENCFF882SHP	Common myeloid progenitor, CD34-positive
+ENCFF883WUZ	Smooth muscle cell
+ENCFF886NBV	Neural stem progenitor cell
+ENCFF888CYI	Temporal lobe
+ENCFF888EHG	CD8-positive, alpha-beta T cell
+ENCFF888XYF	Panc1
+ENCFF893SAP	H1
+ENCFF896RSZ	Pancreas
+ENCFF898UON	Liver
+ENCFF903XHM	Foreskin keratinocyte
+ENCFF907SFS	Neurosphere
+ENCFF910XJF	H1
+ENCFF917GWU	AG09309
+ENCFF918UFN	CD14-positive monocyte
+ENCFF921EJM	Bipolar neuron
+ENCFF921LMY	Foreskin keratinocyte
+ENCFF922OIA	Neutrophil
+ENCFF925KOJ	Mammary epithelial cell
+ENCFF931ZDN	Body of pancreas
+ENCFF932SLP	Middle frontal area 46
+ENCFF935XGO	HEK293
+ENCFF939WHD	Neutrophil
+ENCFF941PHH	Mesodermal cell
+ENCFF942OVV	Osteoblast
+ENCFF943QBM	Mammary epithelial cell
+ENCFF944RTB	HepG2
+ENCFF947FYY	Loucy
+ENCFF956HDZ	Chorionic villus
+ENCFF956SUM	Heart left ventricle
+ENCFF956ZVG	HepG2
+ENCFF958DCL	PC-3
+ENCFF962DQE	CD4-positive, alpha-beta T cell
+ENCFF966WMA	HepG2
+ENCFF968LLI	Naive thymus-derived CD4-positive, alpha-beta T cell
+ENCFF972DXH	Foreskin melanocyte
+ENCFF976LHI	Peripheral blood mononuclear cell
+ENCFF981SRD	HFF-Myc
+ENCFF981UIZ	Neural stem progenitor cell
+ENCFF982QSW	HeLa-S3
+ENCFF989SFT	CD4-positive, alpha-beta T cell
+ENCFF996QBJ	Common myeloid progenitor, CD34-positive
+ENCFF999IVT	CD4-positive, alpha-beta memory T cell
+ENCFF001XFH	Endothelial cell of umbilical vein
+ENCFF010JAC	Radial glial cell
+ENCFF016KKP	Right atrium auricular region
+ENCFF022EDA	DND-41
+ENCFF026HRU	Fibroblast of villous mesenchyme
+ENCFF029QOJ	Astrocyte of the spinal cord
+ENCFF032KRP	HUES6
+ENCFF033BYD	Adrenal gland
+ENCFF037ATP	DOHH2
+ENCFF038ZYP	Fibroblast of dermis NONE and
+ENCFF040BNA	IPS-20b
+ENCFF042DHH	Brain microvascular endothelial cell
+ENCFF050UTV	Layer of hippocampus
+ENCFF055BVC	Fibroblast of lung
+ENCFF056INK	OCI-LY7
+ENCFF065FWT	Layer of hippocampus
+ENCFF067DZR	Fibroblast of pulmonary artery
+ENCFF068AWU	Fibroblast of lung
+ENCFF083UJO	CD8-positive, alpha-beta T cell
+ENCFF088WTS	Skeletal muscle cell
+ENCFF089KJV	Kidney epithelial cell
+ENCFF108IAT	Thoracic aorta
+ENCFF108YKY	Fibroblast of the aortic adventitia
+ENCFF112ZCC	Kidney
+ENCFF118MCM	Fibroblast of lung
+ENCFF121FKZ	Endothelial cell of umbilical vein
+ENCFF126KBC	Esophagus
+ENCFF133NAG	Duodenal mucosa
+ENCFF142ESC	Stomach
+ENCFF152SAO	AG09319
+ENCFF152VED	Muscle layer of colon
+ENCFF155XOC	Skeletal muscle tissue
+ENCFF156AJN	Endothelial cell of umbilical vein
+ENCFF156HIT	Endodermal cell
+ENCFF158TSO	Gastrocnemius medialis
+ENCFF159NUN	AG04450
+ENCFF161FZR	Spinal cord
+ENCFF162DOY	Esophagus
+ENCFF162EWD	Coronary artery
+ENCFF168LOF	HUES64
+ENCFF169TBE	Lung embryo 
+ENCFF178VJL	Lung
+ENCFF185XJY	SU-DHL-6
+ENCFF186TTX	SU-DHL-6
+ENCFF187ZBU	Mucosa of rectum
+ENCFF198KGI	Muscle layer of duodenum
+ENCFF221ARA	Middle frontal area 46
+ENCFF222RPW	CD4-positive, alpha-beta memory T cell
+ENCFF225CLI	Lung
+ENCFF230KKY	Fibroblast of pulmonary artery
+ENCFF234FSK	Muscle layer of colon
+ENCFF234SRA	DND-41
+ENCFF235TWY	Epithelial cell of proximal tubule
+ENCFF237XAR	Astrocyte of the cerebellum
+ENCFF239QIH	Esophagus squamous epithelium
+ENCFF242WBE	Heart left ventricle
+ENCFF247YHM	GM12878
+ENCFF252WLN	Mucosa of rectum
+ENCFF253HJT	Foreskin fibroblast
+ENCFF253TVS	GM12878
+ENCFF261DPT	Karpas-422
+ENCFF266KKC	IPS-18a
+ENCFF274OMV	Right cardiac atrium
+ENCFF277GEX	Kidney
+ENCFF277JFM	Duodenal mucosa
+ENCFF279OIN	A673
+ENCFF280STO	Heart right ventricle
+ENCFF285GLL	HUES6
+ENCFF285TUM	Adrenal gland
+ENCFF292BIA	CD8-positive, alpha-beta T cell
+ENCFF293GWY	Thoracic aorta
+ENCFF295AUX	Angular gyrus
+ENCFF298RSR	T-helper 17 cell treated with phorbol 13-acetate 12-myristate , ionomycin
+ENCFF301VXY	Esophagus squamous epithelium
+ENCFF303IWT	Vagina
+ENCFF308EAA	Subcutaneous abdominal adipose tissue nuclear fraction
+ENCFF310CNI	Subcutaneous abdominal adipose tissue nuclear fraction
+ENCFF312FTI	Fibroblast of villous mesenchyme
+ENCFF312QCH	Heart left ventricle
+ENCFF316XCH	Caudate nucleus
+ENCFF317HVI	Prostate gland
+ENCFF321YIO	Right lobe of liver
+ENCFF326VMV	Smooth muscle cell
+ENCFF340VLR	Esophagus
+ENCFF344VDE	Choroid plexus epithelial cell
+ENCFF345SEP	Tibial nerve
+ENCFF348AZR	Rectal smooth muscle tissue
+ENCFF352WYQ	Foreskin fibroblast
+ENCFF361UOE	Neural progenitor cell
+ENCFF362QPH	Ascending aorta
+ENCFF368HIN	Mesenchymal stem cell
+ENCFF371HJN	Epithelial cell of proximal tubule
+ENCFF373MOC	Gastrocnemius medialis
+ENCFF374XBT	Karpas-422
+ENCFF376YZE	A673
+ENCFF378FKN	Muscle of leg
+ENCFF381HOY	HUES48
+ENCFF384YSJ	Endothelial cell of umbilical vein
+ENCFF387CHH	Cardiac fibroblast
+ENCFF387KUH	Cardiac muscle cell
+ENCFF390TTN	Lung
+ENCFF391RKI	Foreskin fibroblast
+ENCFF391XHL	Endothelial cell of umbilical vein
+ENCFF395UUE	Transverse colon
+ENCFF403FBM	Skeletal muscle tissue
+ENCFF411QTB	Muscle of leg
+ENCFF413CVJ	Epithelial cell of esophagus
+ENCFF423DVG	IMR-90
+ENCFF423PKK	Kidney
+ENCFF431YIS	Right lobe of liver
+ENCFF438YFC	IPS-15b
+ENCFF444NQJ	Kidney epithelial cell
+ENCFF461IZF	Psoas muscle
+ENCFF461NRF	Gastrocnemius medialis
+ENCFF473EQN	Kidney
+ENCFF484QMJ	Fibroblast of the aortic adventitia
+ENCFF490LKC	Substantia nigra
+ENCFF492RSZ	Subcutaneous abdominal adipose tissue nuclear fraction
+ENCFF493LHK	AG09319
+ENCFF501DAS	Gastroesophageal sphincter
+ENCFF501WIO	Esophagus muscularis mucosa
+ENCFF506ZEZ	DND-41
+ENCFF507SDF	Germinal matrix
+ENCFF507YFR	Neural progenitor cell
+ENCFF510MYN	Epithelial cell of esophagus
+ENCFF519ULT	Gastroesophageal sphincter
+ENCFF520ZVX	Adipocyte
+ENCFF523SOF	B cell
+ENCFF525JZK	Fibroblast of breast
+ENCFF536YNG	Ovary
+ENCFF542KJR	Small intestine
+ENCFF544WDT	Cardiac muscle cell
+ENCFF545SKL	Cardiac myoblast
+ENCFF549RLU	HUES64
+ENCFF550BWQ	Subcutaneous abdominal adipose tissue nuclear fraction
+ENCFF550UCU	Foreskin melanocyte
+ENCFF551FWK	Brain microvascular endothelial cell
+ENCFF553MJZ	Skeletal muscle tissue
+ENCFF557TXZ	Heart right ventricle
+ENCFF567MQV	Foreskin fibroblast
+ENCFF567RIA	Germinal matrix
+ENCFF575EYM	Vagina
+ENCFF575KGR	Mesodermal cell
+ENCFF580ZUX	Mucosa of rectum
+ENCFF581LYI	Colonic mucosa
+ENCFF581THS	AG10803
+ENCFF582CYX	ACC112
+ENCFF586OXY	Endothelial cell of umbilical vein
+ENCFF599MLG	Urinary bladder
+ENCFF603EVU	Foreskin fibroblast
+ENCFF604MEV	Stomach smooth muscle
+ENCFF605CYH	Esophagus muscularis mucosa
+ENCFF606MHR	Peyer's patch
+ENCFF608MTP	Gastrocnemius medialis
+ENCFF611DJB	Stomach
+ENCFF613QBK	GM23338
+ENCFF616WQI	IPS-18c
+ENCFF622GFZ	Foreskin fibroblast
+ENCFF638MHE	Peyer's patch
+ENCFF650OWJ	Mesenchymal stem cell
+ENCFF651CZY	Ascending aorta
+ENCFF656LPL	GM12875
+ENCFF659ENO	Stomach smooth muscle
+ENCFF663KGP	Breast epithelium
+ENCFF664XFO	Astrocyte
+ENCFF665XPM	Spleen
+ENCFF667VSW	Endothelial cell of umbilical vein
+ENCFF678TWP	Cardiac muscle cell
+ENCFF678XBX	Thoracic aorta
+ENCFF687HQC	Radial glial cell
+ENCFF688ZFU	OCI-LY7
+ENCFF689CLZ	Skeletal muscle tissue
+ENCFF689SHD	GM23338
+ENCFF719ENH	Astrocyte of the spinal cord
+ENCFF720PJW	Small intestine
+ENCFF725DVR	H1
+ENCFF727WDX	Mesenchymal stem cell
+ENCFF728PTZ	Astrocyte
+ENCFF729REO	H9
+ENCFF737DUO	Stomach smooth muscle
+ENCFF741ANU	Substantia nigra
+ENCFF744CHB	Breast epithelium
+ENCFF749PHH	Mid-neurogenesis radial glial cells
+ENCFF750UGF	Gastrocnemius medialis
+ENCFF751KLA	Colonic mucosa
+ENCFF754ECD	Parathyroid adenoma
+ENCFF760SJJ	Mucosa of rectum
+ENCFF761DBE	B cell
+ENCFF761EYM	Ovary
+ENCFF763HVB	Thyroid gland
+ENCFF772GTQ	AG04450
+ENCFF782XOZ	OCI-LY3
+ENCFF783OAU	Astrocyte of the cerebellum
+ENCFF786GFU	Choroid plexus epithelial cell
+ENCFF787FOM	Cardiac fibroblast
+ENCFF791NGY	Mesenchymal stem cell
+ENCFF799GAB	Right cardiac atrium
+ENCFF799VFZ	Naive thymus-derived CD4-positive, alpha-beta T cell
+ENCFF804LDU	Endodermal cell
+ENCFF810BVK	Liver
+ENCFF810OSX	Heart right ventricle
+ENCFF815QBL	Muscle layer of duodenum
+ENCFF828NIJ	Skeletal muscle tissue
+ENCFF831VGM	Adrenal gland
+ENCFF831WAR	Stomach
+ENCFF838RVD	Cardiac muscle cell
+ENCFF840FAQ	Ectodermal cell
+ENCFF841TJP	H1
+ENCFF844KYC	Fibroblast of lung
+ENCFF845SKH	B cell
+ENCFF849MZZ	IPS-15b
+ENCFF851UWZ	Fibroblast of lung
+ENCFF853WNJ	Subcutaneous abdominal adipose tissue nuclear fraction
+ENCFF865VAE	OCI-LY1
+ENCFF868NHG	SK-N-MC
+ENCFF870BQQ	Psoas muscle
+ENCFF872LJQ	H9
+ENCFF881DQO	Fibroblast of mammary gland
+ENCFF882CKC	Adrenal gland
+ENCFF895YLP	Fibroblast of dermis NONE and
+ENCFF919BJS	Placenta
+ENCFF920BKK	Duodenal mucosa
+ENCFF930NCR	Fibroblast of lung
+ENCFF931RLY	OCI-LY3
+ENCFF935MFX	Lung
+ENCFF938SKR	Mononuclear cell
+ENCFF940KDU	ACC112
+ENCFF943MQH	Lung
+ENCFF949DSS	Coronary artery
+ENCFF951MNO	Ectodermal cell
+ENCFF951SLC	Neuroepithelial stem cell
+ENCFF955EGK	Germinal matrix
+ENCFF957BXW	OCI-LY1
+ENCFF960CLR	IPS-20b
+ENCFF964PJR	Fibroblast of lung
+ENCFF965WTD	Rectal smooth muscle tissue
+ENCFF966ETE	DND-41
+ENCFF967ECB	Spleen
+ENCFF972NAN	Peripheral blood mononuclear cell
+ENCFF973DLK	Common myeloid progenitor, CD34-positive
+ENCFF974TCR	Mesendoderm
+ENCFF979LVI	Endodermal cell
+ENCFF987PUL	Adipocyte
+ENCFF102OIE	Cardiac fibroblast
+ENCFF290HNA	Foreskin fibroblast
+ENCFF609NDW	Foreskin fibroblast
+ENCFF614IKR	NA
+ENCFF150HXF	NA
+ENCFF779YDJ	NA
+ENCFF963KYY	NA
