@@ -1,0 +1,34 @@
+Feature group 19	0.07279693
+Height_of_H3K79me2_peaks	4.261403e-102
+H3K79me2_peak_length	8.375379e-99
+Height_of_H3K36me3_peaks	9.918876e-97
+Height_of_H4K20me1_peaks	4.548651e-96
+H3K36me3_peak_length	1.857773e-92
+H4K20me1_peak_length	6.156908e-88
+H3K4me2_peak_length	1.175122e-87
+H3K4me1_peak_length	1.247947e-87
+Height_of_H3K27ac_peaks	4.829239e-86
+H3K9ac_peak_length	3.007931e-85
+Height_of_H3K9ac_peaks	1.737256e-84
+H3K27ac_peak_length	1.172667e-80
+Height_of_H3K4me3_peaks	2.451309e-79
+H3K4me3_peak_length	3.340652e-79
+Height_of_H3K4me2_peaks	1.638413e-72
+Height_of_H3K4me1_peaks	7.377245e-67
+
+Feature group 11	0.00787951
+VEST_score	5.921476e-59
+Exon_conservation_phastCons_score	9.291963e-53
+Missense_MGAentropy	1.493498e-26
+Gene_age	2.431079e-20
+Family_member_count	2.965705e-08
+
+Feature group 4	0.005720809
+NonSilent_silent_ratio	5.931103e-49
+Missense_damaging_benign_ratio	1.879323e-48
+Missense_silent_ratio	8.168739e-37
+Missense_benign_ratio	3.924316e-29
+Missense_mutations_kb	1.85634e-27
+Missense_entropy	1.842394e-26
+HiFI_missense_LoFI_missense_ratio	5.447007e-23
+

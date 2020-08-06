@@ -1,0 +1,1881 @@
+---
+title: "DORGE"
+author: "Jingyi Jessica Li"
+date: "6/3/2020"
+output:
+  html_document: default
+  pdf_document:
+    keep_tex: yes
+---
+The intermediate files and final output files have been generated and stored in subdirectories. The code chunks that take time to generate intermediate files will not run by default.
+
+```{r}
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE, warning=FALSE, message=FALSE)
+```
+
+# Required R Packages
+```{r}
+if (!require("glmnet")) {
+   install.packages("glmnet", dependencies = TRUE)
+   library(glmnet)
+}
+if (!require("randomForest")) {
+   install.packages("randomForest", dependencies = TRUE)
+   library(randomForest)
+}
+if (!require("e1071")) {
+   install.packages("e1071", dependencies = TRUE)
+   library(e1071)
+}
+if (!require("xgboost")) {
+   install.packages("xgboost", dependencies = TRUE)
+   library(xgboost)
+}
+if (!require("ggplot2")) {
+   install.packages("ggplot2", dependencies = TRUE)
+   library(ggplot2)
+}
+if (!require("gplots")) {
+   install.packages("gplots", dependencies = TRUE)
+   library(gplots)
+}
+if (!require("lattice")) {
+   install.packages("lattice", dependencies = TRUE)
+   library(lattice)
+}
+if (!require("factoextra")) {
+   install.packages("factoextra", dependencies = TRUE)
+   library(factoextra)
+}
+if (!require("PRROC")) {
+   install.packages("PRROC", dependencies = TRUE)
+   library(PRROC)
+}
+require("parallel")
+```
+
+# Create necessary subdirectories
+```{r}
+dir.create("intermediate_output", showWarnings = FALSE)
+dir.create("plots", showWarnings = FALSE)
+dir.create("tables", showWarnings = FALSE)
+```
+
+# Functions
+```{r}
+# a function to find the NP threshold order
+np_order_stat <- function(size, alpha, delta) {
+	violation_rates <- pbinom(q=0:(size-1), size=size, prob=1-alpha, lower.tail=F) 
+	return( which(violation_rates <= delta)[1] )
+}
+# a function to output the threshold on elastic net
+np.lr_enet <- function(x, y, alpha, delta=0.05, lambda, B=15, seed=1001) {
+	set.seed(seed)
+	n <- nrow(x)
+	idx0 <- which(y == 0)
+	idx1 <- which(y == 1)
+	n0 <- length(idx0)
+	n1 <- length(idx1)
+	x0 <- x[idx0,]
+	x1 <- x[idx1,]
+	sapply(1:B, FUN=function(m) {
+		n0_ts <- ceiling(n0/2)
+		n0_lo <- n0 - n0_ts
+		idx0_ts <- sample(1:n0, n0_ts)
+		x0_ts <- x0[idx0_ts,]
+		x0_lo <- x0[-idx0_ts,]
+		
+		x_ts <- rbind(x0_ts, x1)
+		y_ts <- c(rep(0, n0_ts), rep(1, n1))
+		classifier_enet <- glmnet(x=x_ts, y=y_ts, alpha=0.5, family="binomial")
+		prediction_enet <- sort(predict(classifier_enet, newx=x0_lo, s=lambda, type="response"))
+		np_order <- np_order_stat(n0_lo, alpha, delta)
+		prediction_enet[np_order]
+	})
+}
+# a function to output the threshold on logistic regression (for the single-feature case)
+np.lr <- function(data_train, alpha, delta=0.05, B=15, seed=1001) {
+	set.seed(seed)
+	n <- nrow(data_train)
+	idx0 <- which(data_train$y == 0)
+	idx1 <- which(data_train$y == 1)
+	n0 <- length(idx0)
+	n1 <- length(idx1)
+	data_train0 <- data_train[idx0, , drop=F]
+	data_train1 <- data_train[idx1, , drop=F]
+	sapply(1:B, FUN=function(m) {
+		n0_ts <- ceiling(n0/2)
+		n0_lo <- n0 - n0_ts
+		idx0_ts <- sample(1:n0, n0_ts)
+		data_train0_ts <- data_train0[idx0_ts, , drop=F]
+		data_train0_lo <- data_train0[-idx0_ts, , drop=F]
+		
+		data_train_ts <- rbind(data_train0_ts, data_train1)
+
+		classifier_lr <- glm(y~., family=binomial(), data=data_train_ts)
+		prediction_lr <- sort(predict(classifier_lr, newdata=data_train0_lo, type="response"))
+		np_order <- np_order_stat(n0_lo, alpha, delta)
+		prediction_lr[np_order]
+	})
+}
+```
+
+# Preprocess data
+```{r, eval = FALSE}
+# Read in the gene-by-feature matrix
+gene_by_feature_mat <- read.csv("data/All_features1_selected_columns.csv", header=T, stringsAsFactors=F)
+genes <- gene_by_feature_mat[,1]
+gene_by_feature_mat <- gene_by_feature_mat[,-1]
+rownames(gene_by_feature_mat) <- genes
+
+# Read in the training data information (what genes are going to be used as TSGs, OGs, and NGs in training)
+train_info <- read.table("data/Gene_set_new.txt", header=T, sep="\t", stringsAsFactors=F)
+NGs <- train_info$Gene[train_info$Neutral.Genes==1]
+TSGs <- train_info$Gene[train_info$TSG.All.Set==1]
+OGs <- train_info$Gene[train_info$OG.All.Set==1]
+
+DGs <- intersect(TSGs, OGs)
+TSGs <- setdiff(TSGs, DGs)
+OGs <- setdiff(OGs, DGs)
+
+# Save the processed data
+save(gene_by_feature_mat, NGs, TSGs, OGs, DGs, file="data/data_proc.Rdata")
+```
+
+# Explore the preprocessed data
+```{r}
+load("data/data_proc.Rdata")
+# gene_by_feature_mat
+# NGs
+# TSGs
+# OGs
+
+# Visualize the correlations between features
+cor_mat <- cor(gene_by_feature_mat)
+pdf("plots/Feature_correlations.pdf", width=13, height=13)
+levelplot(cor_mat, scales=list(x=list(rot=90, cex=.5), y=list(cex=.5)))
+heatmap.2(cor_mat, trace="none")
+dev.off()
+```
+
+# Explore the training data by PCA
+```{r}
+gene_by_feature_mat.TSG_train <- gene_by_feature_mat[c(NGs, TSGs),]
+gene_by_feature_mat.OG_train <- gene_by_feature_mat[c(NGs, OGs),]
+
+res_pca.TSG_train <- prcomp(gene_by_feature_mat.TSG_train, scale = TRUE)
+res_pca.OG_train <- prcomp(gene_by_feature_mat.OG_train, scale = TRUE)
+res_pca.all <- prcomp(gene_by_feature_mat, scale = TRUE)
+
+pdf("plots/PCA.pdf", width=13, height=13)
+### TSG train
+#### Scree plots
+fviz_eig(res_pca.TSG_train, main="TSG train")
+#### Feature contributions
+fviz_pca_var(res_pca.TSG_train,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title="TSG train",
+             repel = TRUE     # Avoid text overlapping
+             )
+#### Genes in the first three PCs
+par(mfrow=c(2,2))
+##### PC1 vs. PC2
+plot(x=res_pca.TSG_train$x[,1],
+     y=res_pca.TSG_train$x[,2],
+     xlab="PC 1",
+     ylab="PC 2",
+     main="TSG train",
+     type="n"
+     )
+points(x=res_pca.TSG_train$x[1:length(NGs),1],
+     y=res_pca.TSG_train$x[1:length(NGs),2],
+     col=1
+)
+points(x=res_pca.TSG_train$x[(length(NGs)+1):(length(NGs)+length(TSGs)),1],
+     y=res_pca.TSG_train$x[(length(NGs)+1):(length(NGs)+length(TSGs)),2],
+     col=2
+)
+##### PC1 vs. PC3
+plot(x=res_pca.TSG_train$x[,1],
+     y=res_pca.TSG_train$x[,3],
+     xlab="PC 1",
+     ylab="PC 3",
+     main="TSG train",
+     type="n"
+     )
+points(x=res_pca.TSG_train$x[1:length(NGs),1],
+     y=res_pca.TSG_train$x[1:length(NGs),3],
+     col=1
+)
+points(x=res_pca.TSG_train$x[(length(NGs)+1):(length(NGs)+length(TSGs)),1],
+     y=res_pca.TSG_train$x[(length(NGs)+1):(length(NGs)+length(TSGs)),3],
+     col=2
+)
+##### PC2 vs. PC3
+plot(x=res_pca.TSG_train$x[,2],
+     y=res_pca.TSG_train$x[,3],
+     xlab="PC 2",
+     ylab="PC 3",
+     main="TSG train",
+     type="n"
+     )
+points(x=res_pca.TSG_train$x[1:length(NGs),2],
+     y=res_pca.TSG_train$x[1:length(NGs),3],
+     col=1
+)
+points(x=res_pca.TSG_train$x[(length(NGs)+1):(length(NGs)+length(TSGs)),2],
+     y=res_pca.TSG_train$x[(length(NGs)+1):(length(NGs)+length(TSGs)),3],
+     col=2
+)
+##### Legend
+plot.new()
+legend("center", c("NGs", "TSGs"), col=1:2, pch=1, cex=2)
+
+### OG train
+#### Scree plots
+fviz_eig(res_pca.OG_train, main="OG train")
+#### Feature contributions
+fviz_pca_var(res_pca.OG_train,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title="OG train",
+             repel = TRUE     # Avoid text overlapping
+             )
+#### Genes in the first three PCs
+par(mfrow=c(2,2))
+##### PC1 vs. PC2
+plot(x=res_pca.OG_train$x[,1],
+     y=res_pca.OG_train$x[,2],
+     xlab="PC 1",
+     ylab="PC 2",
+     main="OG train",
+     type="n"
+     )
+points(x=res_pca.OG_train$x[1:length(NGs),1],
+     y=res_pca.OG_train$x[1:length(NGs),2],
+     col=1
+)
+points(x=res_pca.OG_train$x[(length(NGs)+1):(length(NGs)+length(OGs)),1],
+     y=res_pca.OG_train$x[(length(NGs)+1):(length(NGs)+length(OGs)),2],
+     col=2
+)
+##### PC1 vs. PC3
+plot(x=res_pca.OG_train$x[,1],
+     y=res_pca.OG_train$x[,3],
+     xlab="PC 1",
+     ylab="PC 3",
+     main="OG train",
+     type="n"
+     )
+points(x=res_pca.OG_train$x[1:length(NGs),1],
+     y=res_pca.OG_train$x[1:length(NGs),3],
+     col=1
+)
+points(x=res_pca.OG_train$x[(length(NGs)+1):(length(NGs)+length(OGs)),1],
+     y=res_pca.OG_train$x[(length(NGs)+1):(length(NGs)+length(OGs)),3],
+     col=2
+)
+##### PC2 vs. PC3
+plot(x=res_pca.OG_train$x[,2],
+     y=res_pca.OG_train$x[,3],
+     xlab="PC 2",
+     ylab="PC 3",
+     main="OG train",
+     type="n"
+     )
+points(x=res_pca.OG_train$x[1:length(NGs),2],
+     y=res_pca.OG_train$x[1:length(NGs),3],
+     col=1
+)
+points(x=res_pca.OG_train$x[(length(NGs)+1):(length(NGs)+length(OGs)),2],
+     y=res_pca.OG_train$x[(length(NGs)+1):(length(NGs)+length(OGs)),3],
+     col=2
+)
+##### Legend
+plot.new()
+legend("center", c("NGs", "OGs"), col=1:2, pch=1, cex=2)
+
+### All genes
+#### Scree plots
+fviz_eig(res_pca.all, main="All genes")
+#### Feature contributions
+fviz_pca_var(res_pca.all,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             title="All genes",
+             repel = TRUE     # Avoid text overlapping
+             )
+#### Genes in the first three PCs
+all_genes <- rownames(gene_by_feature_mat)
+par(mfrow=c(2,2))
+##### PC1 vs. PC2
+plot(x=res_pca.all$x[,1],
+     y=res_pca.all$x[,2],
+     xlab="PC 1",
+     ylab="PC 2",
+     main="All genes",
+     type="n"
+)
+points(x=res_pca.all$x[all_genes %in% NGs,1],
+     y=res_pca.all$x[all_genes %in% NGs,2],
+     pch=22,
+     cex=0.2,
+     col=1
+)
+points(x=res_pca.all$x[all_genes %in% TSGs,1],
+     y=res_pca.all$x[all_genes %in% TSGs,2],
+     pch=22,
+     cex=0.2,
+     col=2
+)
+points(x=res_pca.all$x[all_genes %in% OGs,1],
+     y=res_pca.all$x[all_genes %in% OGs,2],
+     pch=22,
+     cex=0.2,
+     col=3
+)
+points(x=res_pca.all$x[!(all_genes %in% c(NGs, TSGs, OGs)),1],
+     y=res_pca.all$x[!(all_genes %in% c(NGs, TSGs, OGs)),2],
+     pch=22,
+     cex=0.2,
+     col=adjustcolor("blue", alpha.f=0.2)
+)
+##### PC1 vs. PC3
+plot(x=res_pca.all$x[,1],
+     y=res_pca.all$x[,3],
+     xlab="PC 1",
+     ylab="PC 3",
+     main="All genes",
+     type="n"
+)
+points(x=res_pca.all$x[all_genes %in% NGs,1],
+     y=res_pca.all$x[all_genes %in% NGs,3],
+     pch=22,
+     cex=0.2,
+     col=1
+)
+points(x=res_pca.all$x[all_genes %in% TSGs,1],
+	 y=res_pca.all$x[all_genes %in% TSGs,3],
+	 pch=22,
+	 cex=0.2,
+	 col=2
+)
+points(x=res_pca.all$x[all_genes %in% OGs,1],
+	 y=res_pca.all$x[all_genes %in% OGs,3],
+	 pch=22,
+	 cex=0.2,
+	 col=3
+)
+points(x=res_pca.all$x[!(all_genes %in% c(NGs, TSGs, OGs)),1],
+     y=res_pca.all$x[!(all_genes %in% c(NGs, TSGs, OGs)),3],
+     pch=22,
+     cex=0.2,
+     col=adjustcolor("blue", alpha.f=0.2)
+)
+##### PC2 vs. PC3
+plot(x=res_pca.all$x[,2],
+     y=res_pca.all$x[,3],
+     xlab="PC 2",
+     ylab="PC 3",
+     main="All genes",
+     type="n"
+)
+points(x=res_pca.all$x[all_genes %in% NGs,2],
+     y=res_pca.all$x[all_genes %in% NGs,3],
+     pch=22,
+     cex=0.2,
+     col=1
+)
+points(x=res_pca.all$x[all_genes %in% TSGs,2],
+	 y=res_pca.all$x[all_genes %in% TSGs,3],
+	 pch=22,
+   cex=0.2,
+	 col=2
+)
+points(x=res_pca.all$x[all_genes %in% OGs,2],
+	 y=res_pca.all$x[all_genes %in% OGs,3],
+	 pch=22,
+	 cex=0.2,
+	 col=3
+)
+points(x=res_pca.all$x[!(all_genes %in% c(NGs, TSGs, OGs)),2],
+     y=res_pca.all$x[!(all_genes %in% c(NGs, TSGs, OGs)),3],
+     pch=22,
+     cex=0.2,
+     col=adjustcolor("blue", alpha.f=0.2)
+)
+##### Legend
+plot.new()
+legend("center", c("NGs", "TSGs", "OGs", "others"), col=1:4, pch=1, cex=2)
+
+dev.off()
+```
+
+# Define the training data for TSG and OG prediction
+```{r}
+#################### NG vs. TSG ####################
+x_TSG <- gene_by_feature_mat.TSG_train
+y_TSG <- c(rep(0, length(NGs)), rep(1, length(TSGs)))
+
+#################### NG vs. OG ####################
+x_OG <- gene_by_feature_mat.OG_train
+y_OG <- c(rep(0, length(NGs)), rep(1, length(OGs)))
+
+# number of folds for cross validation
+K <- 5
+```
+
+# Divide data into K folds for cross validation
+```{r, eval = FALSE}
+## Set seed
+set.seed(2020)
+
+## A function to downsample the majority class 0 to be r-fold of the minority class 1
+fun_downsample <- function(x, y, r) {
+  # input: x (nxp features), y (n labels), r (ratio of class 0 over class 1)
+  idx0 <- which(y==0)
+  idx1 <- which(y==1)
+  n0 <- length(idx0)
+  n1 <- length(idx1)
+  num_folds <- floor(n0/(n1*r))
+  fold_idx <- sample(1:num_folds, size=n0, replace=T)
+  downsamples <- lapply(1:num_folds, FUN=function(k) {
+    idx0[fold_idx==k]
+  })
+  return(downsamples)
+  # output: sets of downsamples with class 0 indices
+}
+
+# Use K-fold cross-validation and three sample-size ratios (1:1, 5:1, original)
+
+## Define the K folds
+cv_TSG_idx <- sample(1:K, size=length(y_TSG), replace=T)
+cv_OG_idx <- sample(1:K, size=length(y_OG), replace=T)
+
+# Downsample class 0 in each (K-1) folds to NG:TSG = 5:1 and 1:1
+## Each of the following lists has K elements, each of which is a list containing sets of indices of downsampled class 0 in the (K-1)-fold training data
+cv_TSG_downsample_idx0.51 <- vector("list", length=K)
+cv_TSG_downsample_idx0.11 <- vector("list", length=K)
+for (k in 1:K) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- x_TSG[-test_idx,]
+  y_train <- y_TSG[-test_idx]
+  cv_TSG_downsample_idx0.51[[k]] <- fun_downsample(x_train, y_train, r=5)
+  cv_TSG_downsample_idx0.11[[k]] <- fun_downsample(x_train, y_train, r=1)
+}
+
+cv_OG_downsample_idx0.51 <- vector("list", length=K)
+cv_OG_downsample_idx0.11 <- vector("list", length=K)
+for (k in 1:K) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- x_OG[-test_idx,]
+  y_train <- y_OG[-test_idx]
+  cv_OG_downsample_idx0.51[[k]] <- fun_downsample(x_train, y_train, r=5)
+  cv_OG_downsample_idx0.11[[k]] <- fun_downsample(x_train, y_train, r=1)
+}
+
+save(cv_TSG_idx, cv_OG_idx, cv_TSG_downsample_idx0.51, cv_TSG_downsample_idx0.11, cv_OG_downsample_idx0.51, cv_OG_downsample_idx0.11, file="data/cv.Rdata")
+```
+
+# Use multiple classification algorithms
+```{r}
+# load the data assignment for cross validation
+load(file="data/cv.Rdata")
+
+#################### NG vs. TSG ####################
+## logistic regression without penalization
+cv_TSG_lr <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- x_TSG[-test_idx,]
+  x_test <- x_TSG[test_idx,]
+  y_train <- y_TSG[-test_idx]
+  y_test <- y_TSG[test_idx]
+  data_train <- x_train
+  data_train$y <- y_train
+  ## original sample ratio
+  lr_model.orig <- glm(y~., family=binomial(), data=data_train)
+  lr_pred.orig <- predict(lr_model.orig, newdata=x_test, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    data_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    data_train.51$y <- c(rep(0, length(idx0_train.51)), rep(1, n1_train))
+    lr_model.51 <- glm(y~., family=binomial(), data=data_train.51)
+    predict(lr_model.51, newdata=x_test, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    data_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    data_train.11$y <- c(rep(0, length(idx0_train.11)), rep(1, n1_train))
+    lr_model.11 <- glm(y~., family=binomial(), data=data_train.11)
+    predict(lr_model.11, newdata=x_test, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_TSG_lr) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_lr)
+
+## logistic regression with lasso penalization
+### choose the lambda
+lambda.lasso_TSG <- cv.glmnet(x=as.matrix(x_TSG), y=as.factor(y_TSG), family="binomial", foldid=cv_TSG_idx)$lambda.min
+cv_TSG_lr.lasso <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- as.matrix(x_TSG[-test_idx,])
+  x_test <- as.matrix(x_TSG[test_idx,])
+  y_train <- as.factor(y_TSG[-test_idx])
+  y_test <- y_TSG[test_idx]
+  ## original sample ratio
+  lr_model.orig <- glmnet(x=x_train, y=y_train, family="binomial")
+  lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.lasso_TSG, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    lr_model.51 <- glmnet(x=x_train.51, y=y_train.51, family="binomial")
+    predict(lr_model.51, newx=x_test, s=lambda.lasso_TSG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    lr_model.11 <- glmnet(x=x_train.11, y=y_train.11, family="binomial")
+    predict(lr_model.11, newx=x_test, s=lambda.lasso_TSG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_TSG_lr.lasso) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_lr.lasso)
+
+## logistic regression with ridge penalization
+### choose the lambda
+lambda.ridge_TSG <- cv.glmnet(x=as.matrix(x_TSG), y=as.factor(y_TSG), alpha=0, family="binomial", foldid=cv_TSG_idx)$lambda.min
+cv_TSG_lr.ridge <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- as.matrix(x_TSG[-test_idx,])
+  x_test <- as.matrix(x_TSG[test_idx,])
+  y_train <- as.factor(y_TSG[-test_idx])
+  y_test <- y_TSG[test_idx]
+  ## original sample ratio
+  lr_model.orig <- glmnet(x=x_train, y=y_train, alpha=0, family="binomial")
+  lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.ridge_TSG, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    lr_model.51 <- glmnet(x=x_train.51, y=y_train.51, alpha=0, family="binomial")
+	# use the same lambda
+    predict(lr_model.51, newx=x_test, s=lambda.ridge_TSG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    lr_model.11 <- glmnet(x=x_train.11, y=y_train.11, alpha=0, family="binomial")
+	# use the same lambda
+    predict(lr_model.11, newx=x_test, s=lambda.ridge_TSG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_TSG_lr.ridge) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_lr.ridge)
+
+## logistic regression with elastic net penalization
+### choose the lambda
+lambda.enet_TSG <- cv.glmnet(x=as.matrix(x_TSG), y=as.factor(y_TSG), alpha=0.5, family="binomial", foldid=cv_TSG_idx)$lambda.min
+cv_TSG_lr.enet <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- as.matrix(x_TSG[-test_idx,])
+  x_test <- as.matrix(x_TSG[test_idx,])
+  y_train <- as.factor(y_TSG[-test_idx])
+  y_test <- y_TSG[test_idx]
+  ## original sample ratio
+  lr_model.orig <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+  lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.enet_TSG, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    lr_model.51 <- glmnet(x=x_train.51, y=y_train.51, alpha=0.5, family="binomial")
+	# use the same lambda
+    predict(lr_model.51, newx=x_test, s=lambda.enet_TSG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    lr_model.11 <- glmnet(x=x_train.11, y=y_train.11, alpha=0.5, family="binomial")
+	# use the same lambda
+    predict(lr_model.11, newx=x_test, s=lambda.enet_TSG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_TSG_lr.enet) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_lr.enet)
+
+## random forests
+cv_TSG_rf <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- as.matrix(x_TSG[-test_idx,])
+  x_test <- as.matrix(x_TSG[test_idx,])
+  y_train <- as.factor(y_TSG[-test_idx])
+  y_test <- y_TSG[test_idx]
+  ## original sample ratio
+  set.seed(2020)
+  rf_model.orig <- randomForest(x=x_train, y=y_train, xtest=x_test)
+  rf_pred.orig <- rf_model.orig$test$votes[,2]
+  rf_prauc.orig <- pr.curve(scores.class0=rf_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  rf_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    set.seed(2020)
+    rf_model.51 <- randomForest(x=x_train.51, y=y_train.51, xtest=x_test)
+    rf_model.51$test$votes[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  rf_prauc.51 <- pr.curve(scores.class0=rf_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  rf_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    set.seed(2020)
+    rf_model.11 <- randomForest(x=x_train.11, y=y_train.11, xtest=x_test)
+    rf_model.11$test$votes[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  rf_prauc.11 <- pr.curve(scores.class0=rf_pred.11, weights.class0=y_test)$auc.integral
+  return(c(rf_prauc.orig, rf_prauc.51, rf_prauc.11))
+})
+rownames(cv_TSG_rf) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_rf)
+
+## Scale the feature matrix
+x_TSG_scaled <- scale(x_TSG)
+
+## support vector machines with linear kernel
+cv_TSG_svm.linear <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- as.matrix(x_TSG_scaled[-test_idx,])
+  x_test <- as.matrix(x_TSG_scaled[test_idx,])
+  y_train <- as.factor(y_TSG[-test_idx])
+  y_test <- y_TSG[test_idx]
+  ## original sample ratio
+  set.seed(2020)
+  svm_model.orig <- svm(x=x_train, y=y_train, kernel="linear", probability=T)
+  svm_pred.orig <- predict(svm_model.orig, newdata=x_test, probability=T)
+  svm_pred.orig <- attr(svm_pred.orig, "probabilities")[,2]
+  svm_prauc.orig <- pr.curve(scores.class0=svm_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  svm_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.51 <- svm(x=x_train.51, y=y_train.51, kernel="linear", probability=T)
+    svm_pred.51 <- predict(svm_model.51, newdata=x_test, probability=T)
+	attr(svm_pred.51, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.51 <- pr.curve(scores.class0=svm_pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  svm_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.11 <- svm(x=x_train.11, y=y_train.11, kernel="linear", probability=T)
+    svm_pred.11 <- predict(svm_model.11, newdata=x_test, probability=T)
+  attr(svm_pred.11, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.11 <- pr.curve(scores.class0=svm_pred.11, weights.class0=y_test)$auc.integral
+  return(c(svm_prauc.orig, svm_prauc.51, svm_prauc.11))
+})
+rownames(cv_TSG_svm.linear) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_svm.linear)
+
+## support vector machines with Gaussian kernel
+cv_TSG_svm.gauss <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- as.matrix(x_TSG_scaled[-test_idx,])
+  x_test <- as.matrix(x_TSG_scaled[test_idx,])
+  y_train <- as.factor(y_TSG[-test_idx])
+  y_test <- y_TSG[test_idx]
+  ## original sample ratio
+  set.seed(2020)
+  svm_model.orig <- svm(x=x_train, y=y_train, probability=T)
+  svm_pred.orig <- predict(svm_model.orig, newdata=x_test, probability=T)
+  svm_pred.orig <- attr(svm_pred.orig, "probabilities")[,2]
+  svm_prauc.orig <- pr.curve(scores.class0=svm_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  svm_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.51 <- svm(x=x_train.51, y=y_train.51, probability=T)
+    svm_pred.51 <- predict(svm_model.51, newdata=x_test, probability=T)
+	attr(svm_pred.51, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.51 <- pr.curve(scores.class0=svm_pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  svm_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.11 <- svm(x=x_train.11, y=y_train.11, probability=T)
+    svm_pred.11 <- predict(svm_model.11, newdata=x_test, probability=T)
+  attr(svm_pred.11, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.11 <- pr.curve(scores.class0=svm_pred.11, weights.class0=y_test)$auc.integral
+  return(c(svm_prauc.orig, svm_prauc.51, svm_prauc.11))
+})
+rownames(cv_TSG_svm.gauss) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_svm.gauss)
+
+## XGBoost
+cv_TSG_xgboost <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_TSG_idx == k)
+  x_train <- as.matrix(x_TSG_scaled[-test_idx,])
+  x_test <- as.matrix(x_TSG_scaled[test_idx,])
+  y_train <- y_TSG[-test_idx]
+  y_test <- y_TSG[test_idx]
+  ## original sample ratio
+  model.orig <- xgboost(data=x_train, label=y_train, max.depth=4, eta=1, nthread=detectCores()-1, nrounds=7, objective="binary:logistic", verbose=0)
+  pred.orig <- predict(model.orig, newdata=x_test)
+  prauc.orig <- pr.curve(scores.class0=pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)  
+  ## NG:TSG = 5:1
+  num_folds <- length(cv_TSG_downsample_idx0.51[[k]])
+  pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_TSG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- c(rep(0, length(idx0_train.51)), rep(1, n1_train))
+    model.51 <- xgboost(data=x_train.51, label=y_train.51, max.depth=4, eta=1, nthread=detectCores()-1, nrounds=7, objective="binary:logistic", verbose=0)
+    predict(model.51, newdata=x_test)
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  prauc.51 <- pr.curve(scores.class0=pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:TSG = 1:1
+  num_folds <- length(cv_TSG_downsample_idx0.11[[k]])
+  pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_TSG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- c(rep(0, length(idx0_train.11)), rep(1, n1_train))
+    model.11 <- xgboost(data=x_train.11, label=y_train.11, max.depth=4, eta=1, nthread=detectCores()-1, nrounds=7, objective="binary:logistic", verbose=0)
+    predict(model.11, newdata=x_test)
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  prauc.11 <- pr.curve(scores.class0=pred.11, weights.class0=y_test)$auc.integral
+  return(c(prauc.orig, prauc.51, prauc.11))
+})
+rownames(cv_TSG_xgboost) <- c("original", "NG:TSG=5:1", "NG:TSG=1:1")
+rowMeans(cv_TSG_xgboost)
+
+#################### NG vs. OG ####################
+## logistic regression without penalization
+cv_OG_lr <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- x_OG[-test_idx,]
+  x_test <- x_OG[test_idx,]
+  y_train <- y_OG[-test_idx]
+  y_test <- y_OG[test_idx]
+  data_train <- x_train
+  data_train$y <- y_train
+  ## original sample ratio
+  lr_model.orig <- glm(y~., family=binomial(), data=data_train)
+  lr_pred.orig <- predict(lr_model.orig, newdata=x_test, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    data_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    data_train.51$y <- c(rep(0, length(idx0_train.51)), rep(1, n1_train))
+    lr_model.51 <- glm(y~., family=binomial(), data=data_train.51)
+    predict(lr_model.51, newdata=x_test, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    data_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    data_train.11$y <- c(rep(0, length(idx0_train.11)), rep(1, n1_train))
+    lr_model.11 <- glm(y~., family=binomial(), data=data_train.11)
+    predict(lr_model.11, newdata=x_test, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_OG_lr) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_lr)
+
+## logistic regression with lasso penalization
+### choose the lambda
+lambda.lasso_OG <- cv.glmnet(x=as.matrix(x_OG), y=as.factor(y_OG), family="binomial", foldid=cv_OG_idx)$lambda.min
+cv_OG_lr.lasso <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- as.matrix(x_OG[-test_idx,])
+  x_test <- as.matrix(x_OG[test_idx,])
+  y_train <- as.factor(y_OG[-test_idx])
+  y_test <- y_OG[test_idx]
+  ## original sample ratio
+  lr_model.orig <- glmnet(x=x_train, y=y_train, family="binomial")
+  lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.lasso_OG, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    lr_model.51 <- glmnet(x=x_train.51, y=y_train.51, family="binomial")
+    predict(lr_model.51, newx=x_test, s=lambda.lasso_OG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    lr_model.11 <- glmnet(x=x_train.11, y=y_train.11, family="binomial")
+    predict(lr_model.11, newx=x_test, s=lambda.lasso_OG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_OG_lr.lasso) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_lr.lasso)
+
+## logistic regression with ridge penalization
+### choose the lambda
+lambda.ridge_OG <- cv.glmnet(x=as.matrix(x_OG), y=as.factor(y_OG), alpha=0, family="binomial", foldid=cv_OG_idx)$lambda.min
+cv_OG_lr.ridge <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- as.matrix(x_OG[-test_idx,])
+  x_test <- as.matrix(x_OG[test_idx,])
+  y_train <- as.factor(y_OG[-test_idx])
+  y_test <- y_OG[test_idx]
+  ## original sample ratio
+  lr_model.orig <- glmnet(x=x_train, y=y_train, alpha=0, family="binomial")
+  lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.ridge_OG, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    lr_model.51 <- glmnet(x=x_train.51, y=y_train.51, alpha=0, family="binomial")
+	# use the same lambda
+    predict(lr_model.51, newx=x_test, s=lambda.ridge_OG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    lr_model.11 <- glmnet(x=x_train.11, y=y_train.11, alpha=0, family="binomial")
+	# use the same lambda
+    predict(lr_model.11, newx=x_test, s=lambda.ridge_OG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_OG_lr.ridge) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_lr.ridge)
+
+## logistic regression with elastic net penalization
+### choose the lambda
+lambda.enet_OG <- cv.glmnet(x=as.matrix(x_OG), y=as.factor(y_OG), alpha=0.5, family="binomial", foldid=cv_OG_idx)$lambda.min
+cv_OG_lr.enet <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- as.matrix(x_OG[-test_idx,])
+  x_test <- as.matrix(x_OG[test_idx,])
+  y_train <- as.factor(y_OG[-test_idx])
+  y_test <- y_OG[test_idx]
+  ## original sample ratio
+  lr_model.orig <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+  lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.enet_OG, type="response")
+  lr_prauc.orig <- pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  lr_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    lr_model.51 <- glmnet(x=x_train.51, y=y_train.51, alpha=0.5, family="binomial")
+	# use the same lambda
+    predict(lr_model.51, newx=x_test, s=lambda.enet_OG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.51 <- pr.curve(scores.class0=lr_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  lr_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    lr_model.11 <- glmnet(x=x_train.11, y=y_train.11, alpha=0.5, family="binomial")
+	# use the same lambda
+    predict(lr_model.11, newx=x_test, s=lambda.enet_OG, type="response")
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data
+  lr_prauc.11 <- pr.curve(scores.class0=lr_pred.11, weights.class0=y_test)$auc.integral 
+  return(c(lr_prauc.orig, lr_prauc.51, lr_prauc.11))
+})
+rownames(cv_OG_lr.enet) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_lr.enet)
+
+## random forests
+cv_OG_rf <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- as.matrix(x_OG[-test_idx,])
+  x_test <- as.matrix(x_OG[test_idx,])
+  y_train <- as.factor(y_OG[-test_idx])
+  y_test <- y_OG[test_idx]
+  ## original sample ratio
+  set.seed(2020)
+  rf_model.orig <- randomForest(x=x_train, y=y_train, xtest=x_test)
+  rf_pred.orig <- rf_model.orig$test$votes[,2]
+  rf_prauc.orig <- pr.curve(scores.class0=rf_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  rf_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    set.seed(2020)
+    rf_model.51 <- randomForest(x=x_train.51, y=y_train.51, xtest=x_test)
+    rf_model.51$test$votes[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  rf_prauc.51 <- pr.curve(scores.class0=rf_pred.51, weights.class0=y_test)$auc.integral
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  rf_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    set.seed(2020)
+    rf_model.11 <- randomForest(x=x_train.11, y=y_train.11, xtest=x_test)
+    rf_model.11$test$votes[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  rf_prauc.11 <- pr.curve(scores.class0=rf_pred.11, weights.class0=y_test)$auc.integral
+  return(c(rf_prauc.orig, rf_prauc.51, rf_prauc.11))
+})
+rownames(cv_OG_rf) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_rf)
+
+## Scale the feature matrix
+x_OG_scaled <- scale(x_OG)
+
+## support vector machines with linear kernel
+cv_OG_svm.linear <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- as.matrix(x_OG_scaled[-test_idx,])
+  x_test <- as.matrix(x_OG_scaled[test_idx,])
+  y_train <- as.factor(y_OG[-test_idx])
+  y_test <- y_OG[test_idx]
+  ## original sample ratio
+  set.seed(2020)
+  svm_model.orig <- svm(x=x_train, y=y_train, kernel="linear", probability=T)
+  svm_pred.orig <- predict(svm_model.orig, newdata=x_test, probability=T)
+  svm_pred.orig <- attr(svm_pred.orig, "probabilities")[,2]
+  svm_prauc.orig <- pr.curve(scores.class0=svm_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  svm_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.51 <- svm(x=x_train.51, y=y_train.51, kernel="linear", probability=T)
+    svm_pred.51 <- predict(svm_model.51, newdata=x_test, probability=T)
+	attr(svm_pred.51, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.51 <- pr.curve(scores.class0=svm_pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  svm_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.11 <- svm(x=x_train.11, y=y_train.11, kernel="linear", probability=T)
+    svm_pred.11 <- predict(svm_model.11, newdata=x_test, probability=T)
+  attr(svm_pred.11, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.11 <- pr.curve(scores.class0=svm_pred.11, weights.class0=y_test)$auc.integral
+  return(c(svm_prauc.orig, svm_prauc.51, svm_prauc.11))
+})
+rownames(cv_OG_svm.linear) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_svm.linear)
+
+## support vector machines with Gaussian kernel
+cv_OG_svm.gauss <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- as.matrix(x_OG_scaled[-test_idx,])
+  x_test <- as.matrix(x_OG_scaled[test_idx,])
+  y_train <- as.factor(y_OG[-test_idx])
+  y_test <- y_OG[test_idx]
+  ## original sample ratio
+  set.seed(2020)
+  svm_model.orig <- svm(x=x_train, y=y_train, probability=T)
+  svm_pred.orig <- predict(svm_model.orig, newdata=x_test, probability=T)
+  svm_pred.orig <- attr(svm_pred.orig, "probabilities")[,2]
+  svm_prauc.orig <- pr.curve(scores.class0=svm_pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  svm_pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- as.factor(c(rep(0, length(idx0_train.51)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.51 <- svm(x=x_train.51, y=y_train.51, probability=T)
+    svm_pred.51 <- predict(svm_model.51, newdata=x_test, probability=T)
+	attr(svm_pred.51, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.51 <- pr.curve(scores.class0=svm_pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  svm_pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- as.factor(c(rep(0, length(idx0_train.11)), rep(1, n1_train)))
+    set.seed(2020)
+    svm_model.11 <- svm(x=x_train.11, y=y_train.11, probability=T)
+    svm_pred.11 <- predict(svm_model.11, newdata=x_test, probability=T)
+  attr(svm_pred.11, "probabilities")[,2]
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  svm_prauc.11 <- pr.curve(scores.class0=svm_pred.11, weights.class0=y_test)$auc.integral
+  return(c(svm_prauc.orig, svm_prauc.51, svm_prauc.11))
+})
+rownames(cv_OG_svm.gauss) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_svm.gauss)
+
+## XGBoost
+cv_OG_xgboost <- sapply(1:K, FUN=function(k) {
+  test_idx <- which(cv_OG_idx == k)
+  x_train <- as.matrix(x_OG_scaled[-test_idx,])
+  x_test <- as.matrix(x_OG_scaled[test_idx,])
+  y_train <- y_OG[-test_idx]
+  y_test <- y_OG[test_idx]
+  ## original sample ratio
+  model.orig <- xgboost(data=x_train, label=y_train, max.depth=4, eta=1, nthread=detectCores()-1, nrounds=7, objective="binary:logistic", verbose=0)
+  pred.orig <- predict(model.orig, newdata=x_test)
+  prauc.orig <- pr.curve(scores.class0=pred.orig, weights.class0=y_test)$auc.integral
+  
+  idx0_train <- which(y_train==0)
+  idx1_train <- which(y_train==1)
+  n1_train <- length(idx1_train)  
+  ## NG:OG = 5:1
+  num_folds <- length(cv_OG_downsample_idx0.51[[k]])
+  pred.51 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.51 <- idx0_train[cv_OG_downsample_idx0.51[[k]][[i]]]
+    x_train.51 <- rbind(x_train[idx0_train.51,], x_train[idx1_train,])
+    y_train.51 <- c(rep(0, length(idx0_train.51)), rep(1, n1_train))
+    model.51 <- xgboost(data=x_train.51, label=y_train.51, max.depth=4, eta=1, nthread=detectCores()-1, nrounds=7, objective="binary:logistic", verbose=0)
+    predict(model.51, newdata=x_test)
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  prauc.51 <- pr.curve(scores.class0=pred.51, weights.class0=y_test)$auc.integral
+  
+  ## NG:OG = 1:1
+  num_folds <- length(cv_OG_downsample_idx0.11[[k]])
+  pred.11 <- rowMeans(matrix(unlist(mclapply(1:num_folds, FUN=function(i) {
+    idx0_train.11 <- idx0_train[cv_OG_downsample_idx0.11[[k]][[i]]]
+    x_train.11 <- rbind(x_train[idx0_train.11,], x_train[idx1_train,])
+    y_train.11 <- c(rep(0, length(idx0_train.11)), rep(1, n1_train))
+    model.11 <- xgboost(data=x_train.11, label=y_train.11, max.depth=4, eta=1, nthread=detectCores()-1, nrounds=7, objective="binary:logistic", verbose=0)
+    predict(model.11, newdata=x_test)
+  }, mc.cores=detectCores()-1)), ncol=num_folds)) # average predicted probabilities over num_folds divisions of class 0 training data  
+  prauc.11 <- pr.curve(scores.class0=pred.11, weights.class0=y_test)$auc.integral
+  return(c(prauc.orig, prauc.51, prauc.11))
+})
+rownames(cv_OG_xgboost) <- c("original", "NG:OG=5:1", "NG:OG=1:1")
+rowMeans(cv_OG_xgboost)
+```
+
+# Based on the above results, first use logistic regression to train a classifier
+```{r}
+# DORGE-TSG
+data_TSG <- x_TSG
+data_TSG$y <- y_TSG
+TSG.classifier <- glm(y~., family=binomial(), data=data_TSG)
+TSG.prediction <- predict(TSG.classifier, newdata=gene_by_feature_mat, type="response")
+
+# DORGE-OG
+data_OG <- x_OG
+data_OG$y <- y_OG
+OG.classifier <- glm(y~., family=binomial(), data=data_OG, control=glm.control(maxit=50))
+OG.prediction <- predict(OG.classifier, newdata=gene_by_feature_mat, type="response")
+
+# Visualize the predicted probabilities
+pdf("plots/TSG_OG_pred_probs-lr.pdf")
+par(mfrow=c(2,2))
+# distribution of TSG predictions
+hist(TSG.prediction)
+# distribution of OG predictions
+hist(OG.prediction)
+# compare TSG predictions with OG predictions
+plot(x=TSG.prediction, y=OG.prediction, col=adjustcolor("black", alpha.f=0.05))
+# jittered version
+plot(x=jitter(TSG.prediction, factor=0.3), y=jitter(OG.prediction, factor=0.3), col=adjustcolor("black", alpha.f=0.05))
+# locate training NGs in the predictions
+plot(x=TSG.prediction, y=OG.prediction, type="n", main="NGs")
+points(x=TSG.prediction[NGs], y=OG.prediction[NGs], col=adjustcolor("blue", alpha.f=0.2))
+# locate training TSGs in the predictions
+plot(x=TSG.prediction, y=OG.prediction, type="n", main="TSGs")
+points(x=TSG.prediction[TSGs], y=OG.prediction[TSGs], col=adjustcolor("red", alpha.f=0.2))
+# locate training OGs in the predictions
+plot(x=TSG.prediction, y=OG.prediction, type="n", main="OGs")
+points(x=TSG.prediction[OGs], y=OG.prediction[OGs], col=adjustcolor("green", alpha.f=0.2))
+dev.off()
+```
+
+# Next try: ridge
+```{r}
+### a function to process the coefficient output by glmnet
+proc_glmnet_coef_output <- function(glmnet_coef) {
+  tmp <- as.data.frame(as.matrix(glmnet_coef))
+  feature_names <- rownames(tmp)
+  tmp <- tmp[-1,] # remove intercept
+  feature_names <- feature_names[-1]
+  feature_order <- order(abs(tmp), decreasing=T)
+  output <- data.frame(Coefficient=tmp[feature_order])
+  rownames(output) <- feature_names[feature_order]
+  return(output)
+}
+
+# DORGE-TSG
+TSG.classifier_ridge <- glmnet(x=as.matrix(x_TSG), y=as.factor(y_TSG), alpha=0, family="binomial")
+TSG.prediction_ridge <- predict(TSG.classifier_ridge, newx=as.matrix(gene_by_feature_mat), s=lambda.ridge_TSG, type="response")
+names(TSG.prediction_ridge) <- rownames(gene_by_feature_mat)
+## selected features
+TSG.features_ridge <- proc_glmnet_coef_output(coef(TSG.classifier_ridge, s=lambda.ridge_TSG))
+write.csv(x=TSG.features_ridge, quote=F, file="tables/TSG_selected_features-lr_ridge.csv")
+
+# DORGE-OG
+OG.classifier_ridge <- glmnet(x=as.matrix(x_OG), y=as.factor(y_OG), alpha=0, family="binomial")
+OG.prediction_ridge <- predict(OG.classifier_ridge, newx=as.matrix(gene_by_feature_mat), s=lambda.ridge_OG, type="response")
+names(OG.prediction_ridge) <- rownames(gene_by_feature_mat)
+## selected features
+OG.features_ridge <- proc_glmnet_coef_output(coef(OG.classifier_ridge, s=lambda.ridge_OG))
+write.csv(x=OG.features_ridge, quote=F, file="tables/OG_selected_features-lr_ridge.csv")
+
+# Visualize the predicted probabilities
+pdf("plots/TSG_OG_pred_probs-lr_ridge.pdf")
+par(mfrow=c(2,2))
+# distribution of TSG predictions
+hist(TSG.prediction_ridge)
+# distribution of OG predictions
+hist(OG.prediction_ridge)
+# compare TSG predictions with OG predictions
+plot(x=TSG.prediction_ridge, y=OG.prediction_ridge, col=adjustcolor("black", alpha.f=0.05))
+# jittered version
+plot(x=jitter(TSG.prediction_ridge, factor=0.3), y=jitter(OG.prediction_ridge, factor=0.3), col=adjustcolor("black", alpha.f=0.05))
+# locate training NGs in the predictions
+plot(x=TSG.prediction_ridge, y=OG.prediction_ridge, type="n", main="NGs")
+points(x=TSG.prediction_ridge[NGs], y=OG.prediction_ridge[NGs], col=adjustcolor("blue", alpha.f=0.2))
+# locate training TSGs in the predictions
+plot(x=TSG.prediction_ridge, y=OG.prediction_ridge, type="n", main="TSGs")
+points(x=TSG.prediction_ridge[TSGs], y=OG.prediction_ridge[TSGs], col=adjustcolor("red", alpha.f=0.2))
+# locate training OGs in the predictions
+plot(x=TSG.prediction_ridge, y=OG.prediction_ridge, type="n", main="OGs")
+points(x=TSG.prediction_ridge[OGs], y=OG.prediction_ridge[OGs], col=adjustcolor("green", alpha.f=0.2))
+dev.off()
+```
+
+# Try lasso and elastic net to further confirm that elastic net is a reasonable approach, consistent with its best performance in the PR-AUC result
+```{r}
+# DORGE-TSG
+TSG.classifier_lasso <- glmnet(x=as.matrix(x_TSG), y=as.factor(y_TSG), alpha=1, family="binomial")
+TSG.prediction_lasso <- predict(TSG.classifier_lasso, newx=as.matrix(gene_by_feature_mat), s=lambda.lasso_TSG, type="response")
+names(TSG.prediction_lasso) <- rownames(gene_by_feature_mat)
+## selected features
+TSG.features_lasso <- proc_glmnet_coef_output(coef(TSG.classifier_lasso, s=lambda.lasso_TSG))
+write.csv(x=TSG.features_lasso, quote=F, file="tables/TSG_selected_features-lr_lasso.csv")
+
+# DORGE-OG
+OG.classifier_lasso <- glmnet(x=as.matrix(x_OG), y=as.factor(y_OG), alpha=1, family="binomial")
+OG.prediction_lasso <- predict(OG.classifier_lasso, newx=as.matrix(gene_by_feature_mat), s=lambda.lasso_OG, type="response")
+names(OG.prediction_lasso) <- rownames(gene_by_feature_mat)
+## selected features
+OG.features_lasso <- proc_glmnet_coef_output(coef(OG.classifier_lasso, s=lambda.lasso_OG))
+write.csv(x=OG.features_lasso, quote=F, file="tables/OG_selected_features-lr_lasso.csv")
+
+# Visualize the predicted probabilities
+pdf("plots/TSG_OG_pred_probs-lr_lasso.pdf")
+par(mfrow=c(2,2))
+# distribution of TSG predictions
+hist(TSG.prediction_lasso)
+# distribution of OG predictions
+hist(OG.prediction_lasso)
+# compare TSG predictions with OG predictions
+plot(x=TSG.prediction_lasso, y=OG.prediction_lasso, col=adjustcolor("black", alpha.f=0.05))
+# jittered version
+plot(x=jitter(TSG.prediction_lasso, factor=0.3), y=jitter(OG.prediction_lasso, factor=0.3), col=adjustcolor("black", alpha.f=0.05))
+# locate training NGs in the predictions
+plot(x=TSG.prediction_lasso, y=OG.prediction_lasso, type="n", main="NGs")
+points(x=TSG.prediction_lasso[NGs], y=OG.prediction_lasso[NGs], col=adjustcolor("blue", alpha.f=0.2))
+# locate training TSGs in the predictions
+plot(x=TSG.prediction_lasso, y=OG.prediction_lasso, type="n", main="TSGs")
+points(x=TSG.prediction_lasso[TSGs], y=OG.prediction_lasso[TSGs], col=adjustcolor("red", alpha.f=0.2))
+# locate training OGs in the predictions
+plot(x=TSG.prediction_lasso, y=OG.prediction_lasso, type="n", main="OGs")
+points(x=TSG.prediction_lasso[OGs], y=OG.prediction_lasso[OGs], col=adjustcolor("green", alpha.f=0.2))
+dev.off()
+```
+
+```{r}
+# DORGE-TSG
+TSG.classifier_enet <- glmnet(x=as.matrix(x_TSG), y=as.factor(y_TSG), alpha=0.5, family="binomial")
+TSG.prediction_enet <- predict(TSG.classifier_enet, newx=as.matrix(gene_by_feature_mat), s=lambda.enet_TSG, type="response")
+names(TSG.prediction_enet) <- rownames(gene_by_feature_mat)
+## selected features
+TSG.features_enet <- proc_glmnet_coef_output(coef(TSG.classifier_enet, s=lambda.enet_TSG))
+write.csv(x=TSG.features_enet, quote=F, file="tables/TSG_selected_features-lr_enet.csv")
+
+# DORGE-OG
+OG.classifier_enet <- glmnet(x=as.matrix(x_OG), y=as.factor(y_OG), alpha=0.5, family="binomial")
+OG.prediction_enet <- predict(OG.classifier_enet, newx=as.matrix(gene_by_feature_mat), s=lambda.enet_OG, type="response")
+names(OG.prediction_enet) <- rownames(gene_by_feature_mat)
+## selected features
+OG.features_enet <- proc_glmnet_coef_output(coef(OG.classifier_enet, s=lambda.enet_OG))
+write.csv(x=OG.features_enet, quote=F, file="tables/OG_selected_features-lr_enet.csv")
+
+# Visualize the predicted probabilities
+pdf("plots/TSG_OG_pred_probs-lr_enet.pdf")
+par(mfrow=c(2,2))
+# distribution of TSG predictions
+hist(TSG.prediction_enet)
+# distribution of OG predictions
+hist(OG.prediction_enet)
+# compare TSG predictions with OG predictions
+plot(x=TSG.prediction_enet, y=OG.prediction_enet, col=adjustcolor("black", alpha.f=0.05))
+# jittered version
+plot(x=jitter(TSG.prediction_enet, factor=0.3), y=jitter(OG.prediction_enet, factor=0.3), col=adjustcolor("black", alpha.f=0.05))
+# locate training NGs in the predictions
+plot(x=TSG.prediction_enet, y=OG.prediction_enet, type="n", main="NGs")
+points(x=TSG.prediction_enet[NGs], y=OG.prediction_enet[NGs], col=adjustcolor("blue", alpha.f=0.2))
+# locate training TSGs in the predictions
+plot(x=TSG.prediction_enet, y=OG.prediction_enet, type="n", main="TSGs")
+points(x=TSG.prediction_enet[TSGs], y=OG.prediction_enet[TSGs], col=adjustcolor("red", alpha.f=0.2))
+# locate training OGs in the predictions
+plot(x=TSG.prediction_enet, y=OG.prediction_enet, type="n", main="OGs")
+points(x=TSG.prediction_enet[OGs], y=OG.prediction_enet[OGs], col=adjustcolor("green", alpha.f=0.2))
+dev.off()
+```
+
+# Decide to use elastic net for prediction
+```{r}
+# Write the TSG prediction results to a file
+TSG.prediction_enet <- as.data.frame(sort(TSG.prediction_enet, decreasing=T))
+colnames(TSG.prediction_enet) <- "TSG probability"
+write.csv(x=TSG.prediction_enet, quote=F, file="tables/TSG_prediction-lr_enet.csv")
+
+hist(TSG.prediction_enet[,1])
+# if we set the threshold, check the overlap with training TSGs
+TSG_recall <- NULL
+for (t in seq(0.1, 0.9, by=0.1)) {
+  cat("Threshold: ")
+  cat(t)
+  cat("\n")
+  cat("Number of predicted TSGs: ")
+  cat(sum(TSG.prediction_enet[,1]>=t))
+  cat("\n")
+  TSGs.predicted <- rownames(TSG.prediction_enet)[TSG.prediction_enet[,1]>=t]
+  cat("Number of correctedly predicted training TSGs: ")
+  cat(length(intersect(TSGs.predicted, TSGs)))
+  cat("\n")
+  cat("% of correctedly predicted training TSGs: ")
+  cat(length(intersect(TSGs.predicted, TSGs))/length(TSGs))
+  TSG_recall <- c(TSG_recall, length(intersect(TSGs.predicted, TSGs))/length(TSGs))
+  cat("\n")
+  nonTSGs.predicted <- rownames(TSG.prediction_enet)[TSG.prediction_enet[,1]<t]
+  cat("Number of correctedly predicted training NGs: ")
+  cat(length(intersect(nonTSGs.predicted, NGs)))
+  cat("\n")
+  cat("% of correctedly predicted training NGs: ")
+  cat(length(intersect(nonTSGs.predicted, NGs))/length(NGs))
+  cat("\n\n")
+}
+par(mfrow=c(1,2))
+plot(x=seq(0.1, 0.9, by=0.1), y=TSG_recall, xlab="threshold", ylab="recall", main="TSG prediction")
+plot(x=seq(0.2, 0.9, by=0.1), y=TSG_recall[1:8]-TSG_recall[2:9], xlab="threshold", ylab="recall diff", main="TSG prediction")
+par(mfrow=c(1,1))
+
+# Write the OG prediction results to a file
+OG.prediction_enet <- as.data.frame(sort(OG.prediction_enet, decreasing=T))
+colnames(OG.prediction_enet) <- "OG probability"
+write.csv(x=OG.prediction_enet, quote=F, file="tables/OG_prediction-lr_enet.csv")
+
+hist(OG.prediction_enet[,1])
+# if we set the threshold, check the overlap with training OGs
+OG_recall <- NULL
+for (t in seq(0.1, 0.9, by=0.1)) {
+  cat("Threshold: ")
+  cat(t)
+  cat("\n")
+  cat("Number of predicted OGs: ")
+  cat(sum(OG.prediction_enet[,1]>=t))
+  cat("\n")
+  OGs.predicted <- rownames(OG.prediction_enet)[OG.prediction_enet[,1]>=t]
+  cat("Number of correctedly predicted training OGs: ")
+  cat(length(intersect(OGs.predicted, OGs)))
+  cat("\n")
+  cat("% of correctedly predicted training OGs: ")
+  cat(length(intersect(OGs.predicted, OGs))/length(OGs))
+  OG_recall <- c(OG_recall, length(intersect(OGs.predicted, OGs))/length(OGs))
+  cat("\n")
+  nonOGs.predicted <- rownames(OG.prediction_enet)[OG.prediction_enet[,1]<t]
+  cat("Number of correctedly predicted training NGs: ")
+  cat(length(intersect(nonOGs.predicted, NGs)))
+  cat("\n")
+  cat("% of correctedly predicted training NGs: ")
+  cat(length(intersect(nonOGs.predicted, NGs))/length(NGs))
+  cat("\n\n")
+}
+par(mfrow=c(1,2))
+plot(x=seq(0.1, 0.9, by=0.1), y=OG_recall, xlab="threshold", ylab="recall", main="OG prediction")
+plot(x=seq(0.2, 0.9, by=0.1), y=OG_recall[1:8]-OG_recall[2:9], xlab="threshold", ylab="recall diff", main="OG prediction")
+par(mfrow=c(1,1))
+
+# use the NP classification to decide the threshold based on alpha=0.001
+
+# TSG
+TSG.np_0.01 <-mean(np.lr_enet(x=as.matrix(x_TSG), y=y_TSG, alpha=0.01, delta=0.1, lambda=lambda.enet_TSG))
+
+TSG.np_0.005 <-mean(np.lr_enet(x=as.matrix(x_TSG), y=y_TSG, alpha=0.005, delta=0.1, lambda=lambda.enet_TSG))
+
+for (t in c(TSG.np_0.01, TSG.np_0.005)) {
+  cat("Threshold: ")
+  cat(t)
+  cat("\n")
+  cat("Number of predicted TSGs: ")
+  cat(sum(TSG.prediction_enet[,1]>=t))
+  cat("\n")
+  TSGs.predicted <- rownames(TSG.prediction_enet)[TSG.prediction_enet[,1]>=t]
+  cat("Number of correctedly predicted training TSGs: ")
+  cat(length(intersect(TSGs.predicted, TSGs)))
+  cat("\n")
+  cat("% of correctedly predicted training TSGs: ")
+  cat(length(intersect(TSGs.predicted, TSGs))/length(TSGs))
+  cat("\n")
+  nonTSGs.predicted <- rownames(TSG.prediction_enet)[TSG.prediction_enet[,1]<t]
+  cat("Number of correctedly predicted training NGs: ")
+  cat(length(intersect(nonTSGs.predicted, NGs)))
+  cat("\n")
+  cat("% of correctedly predicted training NGs: ")
+  cat(length(intersect(nonTSGs.predicted, NGs))/length(NGs))
+  cat("\n\n")
+}
+
+# OG
+OG.np_0.01 <-mean(np.lr_enet(x=as.matrix(x_OG), y=y_OG, alpha=0.01, delta=0.1, lambda=lambda.enet_OG))
+
+OG.np_0.005 <-mean(np.lr_enet(x=as.matrix(x_OG), y=y_OG, alpha=0.005, delta=0.1, lambda=lambda.enet_OG))
+
+for (t in c(OG.np_0.01, OG.np_0.005)) {
+  cat("Threshold: ")
+  cat(t)
+  cat("\n")
+  cat("Number of predicted OGs: ")
+  cat(sum(OG.prediction_enet[,1]>=t))
+  cat("\n")
+  OGs.predicted <- rownames(OG.prediction_enet)[OG.prediction_enet[,1]>=t]
+  cat("Number of correctedly predicted training OGs: ")
+  cat(length(intersect(OGs.predicted, OGs)))
+  cat("\n")
+  cat("% of correctedly predicted training OGs: ")
+  cat(length(intersect(OGs.predicted, OGs))/length(OGs))
+  cat("\n")
+  nonOGs.predicted <- rownames(OG.prediction_enet)[OG.prediction_enet[,1]<t]
+  cat("Number of correctedly predicted training NGs: ")
+  cat(length(intersect(nonOGs.predicted, NGs)))
+  cat("\n")
+  cat("% of correctedly predicted training NGs: ")
+  cat(length(intersect(nonOGs.predicted, NGs))/length(NGs))
+  cat("\n\n")
+}
+```
+
+# Output precision-recall curves and predictions for feature subsets
+```{r}
+# TSG
+TSG_feature_subsets <- vector("list", length=0)
+TSG_feature_subsets[[1]] <- c(1:28, 42:46)
+TSG_feature_subsets[[2]] <- c(29:33, 47:53)
+TSG_feature_subsets[[3]] <- c(35:37)
+TSG_feature_subsets[[4]] <- c(34, 38:41, 54:75)
+TSG_feature_subsets[[5]] <- c(29:41, 47:75)
+TSG_feature_subsets[[6]] <- c(1:28, 34:46, 54:75)
+TSG_feature_subsets[[7]] <- c(1:34, 38:75)
+TSG_feature_subsets[[8]] <- c(1:33, 35:37, 42:53)
+TSG_feature_subsets[[9]] <- c(37)
+TSG_feature_subsets[[10]] <- c(12, 13, 15)
+TSG_feature_subsets[[11]] <- 1:ncol(gene_by_feature_mat)
+names(TSG_feature_subsets) <- c("Mutation", "Genomics", "Phenotype", "Epigenetics", "wo_Mutation", "wo_Genomics", "wo_Phenotype", "wo_Epigenetics", "CRISPR-only", "TUSON-TSG", "All")
+
+# CV for PR cures
+lambda.enet_TSG.list <- mclapply(1:length(TSG_feature_subsets), FUN=function(i) {
+  ### features in group i
+  features_i <- TSG_feature_subsets[[i]]
+  if (length(features_i) > 1) {
+    ### choose the lambda
+    lambda.enet <- cv.glmnet(x=as.matrix(x_TSG[,features_i]), y=as.factor(y_TSG), alpha=0.5, family="binomial", foldid=cv_TSG_idx)$lambda.min
+    return(lambda.enet)
+  } else {
+    return(NA)
+  }
+}, mc.cores=detectCores()-1)
+TSG.predictions <- mclapply(1:length(TSG_feature_subsets), FUN=function(i) {
+  ### features in group i
+  features_i <- TSG_feature_subsets[[i]]
+  ### predicted probabilities
+  TSG.prediction <- rep(NA, length(y_TSG))
+  for (k in 1:K) {
+    test_idx <- which(cv_TSG_idx == k)
+    x_train <- as.matrix(x_TSG[-test_idx, features_i])
+    x_test <- as.matrix(x_TSG[test_idx, features_i])
+    y_train <- as.factor(y_TSG[-test_idx])
+
+    if (length(features_i) > 1) {
+      TSG.classifier <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+      TSG.prediction[test_idx] <- predict(TSG.classifier, newx=x_test, s=lambda.enet_TSG.list[[i]], type="response")
+    } else {
+      data_train <- data.frame(x=x_TSG[-test_idx, features_i], y=y_TSG[-test_idx])
+      data_test <- data.frame(x=x_TSG[test_idx, features_i], y=y_TSG[test_idx])
+      TSG.classifier <- glm(y~., family=binomial(), data=data_train)
+      TSG.prediction[test_idx] <- predict(TSG.classifier, newdata=data_test, type="response")
+    }
+  }
+  TSG.prediction
+}, mc.cores=detectCores()-1)
+names(TSG.predictions) <- names(TSG_feature_subsets)
+
+save(TSG.predictions, y_TSG, file="intermediate_output/TSG.rdata")
+
+## check the AUPRC
+sapply(TSG.predictions, FUN=function(x) pr.curve(scores.class0=x, weights.class0=y_TSG)$auc.integral)
+
+# OG
+OG_feature_subsets <- vector("list", length=0)
+OG_feature_subsets[[1]] <- c(1:28, 42:46)
+OG_feature_subsets[[2]] <- c(29:33, 47:53)
+OG_feature_subsets[[3]] <- c(35:37)
+OG_feature_subsets[[4]] <- c(34, 38:41, 54:75)
+OG_feature_subsets[[5]] <- c(29:41, 47:75)
+OG_feature_subsets[[6]] <- c(1:28, 34:46, 54:75)
+OG_feature_subsets[[7]] <- c(1:34, 38:75)
+OG_feature_subsets[[8]] <- c(1:33, 35:37, 42:53)
+OG_feature_subsets[[9]] <- c(37)
+OG_feature_subsets[[10]] <- c(7, 15)
+OG_feature_subsets[[11]] <- 1:ncol(gene_by_feature_mat)
+names(OG_feature_subsets) <- c("Mutation", "Genomics", "Phenotype", "Epigenetics", "wo_Mutation", "wo_Genomics", "wo_Phenotype", "wo_Epigenetics", "CRISPR-only", "TUSON-OG", "All")
+
+# CV for PR curves
+lambda.enet_OG.list <- mclapply(1:length(OG_feature_subsets), FUN=function(i) {
+  ### features in group i
+  features_i <- OG_feature_subsets[[i]]
+  if (length(features_i) > 1) {
+    ### choose the lambda
+    lambda.enet <- cv.glmnet(x=as.matrix(x_OG[,features_i]), y=as.factor(y_OG), alpha=0.5, family="binomial", foldid=cv_OG_idx)$lambda.min
+    return(lambda.enet)
+  } else {
+    return(NA)
+  }
+}, mc.cores=detectCores()-1)
+OG.predictions <- mclapply(1:length(OG_feature_subsets), FUN=function(i) {
+  ### features in group i
+  features_i <- OG_feature_subsets[[i]]
+  ### predicted probabilities
+  OG.prediction <- rep(NA, length(y_OG))
+  for (k in 1:K) {
+    test_idx <- which(cv_OG_idx == k)
+    x_train <- as.matrix(x_OG[-test_idx, features_i])
+    x_test <- as.matrix(x_OG[test_idx, features_i])
+    y_train <- as.factor(y_OG[-test_idx])
+
+    if (length(features_i) > 1) {
+      OG.classifier <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+      OG.prediction[test_idx] <- predict(OG.classifier, newx=x_test, s=lambda.enet_OG.list[[i]], type="response")
+    } else {
+      data_train <- data.frame(x=x_OG[-test_idx, features_i], y=y_OG[-test_idx])
+      data_test <- data.frame(x=x_OG[test_idx, features_i], y=y_OG[test_idx])
+      OG.classifier <- glm(y~., family=binomial(), data=data_train)
+      OG.prediction[test_idx] <- predict(OG.classifier, newdata=data_test, type="response")
+    }
+  }
+  OG.prediction
+}, mc.cores=detectCores()-1)
+names(OG.predictions) <- names(OG_feature_subsets)
+
+save(OG.predictions, y_OG, file="intermediate_output/OG.rdata")
+
+## check the AUPRC
+sapply(OG.predictions, FUN=function(x) pr.curve(scores.class0=x, weights.class0=y_OG)$auc.integral)
+
+##############
+# for two feature subsets, obtain their predicted probabilities for TSGs and OGs
+for (i in c(4,8,9)) {
+  # TSG
+  cat("######\nTSG\n\n")
+  ### features in group i
+  features_i <- TSG_feature_subsets[[i]]
+  group_name <- names(TSG_feature_subsets)[i]
+
+  if (length(features_i) > 1) {
+    x_train <- as.matrix(x_TSG[,features_i])
+    y_train <- as.factor(y_TSG)
+    ### choose the lambda
+    lambda.enet <- lambda.enet_TSG.list[[i]]
+    TSG.classifier <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+    TSG.prediction <- predict(TSG.classifier, newx=as.matrix(gene_by_feature_mat[,features_i]), s=lambda.enet, type="response")
+
+    TSG.np_0.01 <- mean(np.lr_enet(x=x_train, y=y_TSG, alpha=0.01, delta=0.1, lambda=lambda.enet))
+  } else {
+    data_train <- data.frame(x=as.matrix(x_TSG[, features_i]), y=y_TSG)
+    data_test <- data.frame(x=as.matrix(gene_by_feature_mat[,features_i]))
+    TSG.classifier <- glm(y~., family=binomial(), data=data_train)
+    TSG.prediction <- predict(TSG.classifier, newdata=data_test, type="response")
+
+    TSG.np_0.01 <- mean(np.lr(data_train=data_train, alpha=0.01, delta=0.1))
+  }
+  
+  order.ind <- order(TSG.prediction, decreasing=T)
+  TSG.prediction <- matrix(TSG.prediction[order.ind], ncol=1)
+  rownames(TSG.prediction) <- rownames(gene_by_feature_mat)[order.ind]
+    
+  cat(group_name)
+  cat("\n")
+  for (t in c(TSG.np_0.01)) {
+    cat("Threshold: ")
+    cat(t)
+    cat("\n")
+    cat("Number of predicted TSGs: ")
+    cat(sum(TSG.prediction[,1]>=t))
+    cat("\n")
+    TSGs.predicted <- rownames(TSG.prediction)[TSG.prediction[,1]>=t]
+    cat("Number of correctedly predicted training TSGs: ")
+    cat(length(intersect(TSGs.predicted, TSGs)))
+    cat("\n")
+    cat("% of correctedly predicted training TSGs: ")
+    cat(length(intersect(TSGs.predicted, TSGs))/length(TSGs))
+    cat("\n")
+    nonTSGs.predicted <- rownames(TSG.prediction)[TSG.prediction[,1]<t]
+    cat("Number of correctedly predicted training NGs: ")
+    cat(length(intersect(nonTSGs.predicted, NGs)))
+    cat("\n")
+    cat("% of correctedly predicted training NGs: ")
+    cat(length(intersect(nonTSGs.predicted, NGs))/length(NGs))
+    cat("\n\n")
+  }
+  # Write the TSG prediction results to a file
+  TSG.prediction <- as.data.frame(TSG.prediction)
+  colnames(TSG.prediction) <- "TSG probability"
+  write.csv(x=TSG.prediction, quote=F, file=paste0("tables/TSG_prediction-lr_enet.", group_name, ".csv"))
+  
+  TSG.prediction_thre <- TSG.prediction[TSG.prediction[,1]>=t, , drop=F]
+  write.csv(x=TSG.prediction_thre, quote=F, file=paste0("tables/TSG_prediction-lr_enet.", group_name, ".FPR=0.01.csv"))
+  
+  # OG
+  cat("######\nOG\n\n")
+  ### features in group i
+  features_i <- OG_feature_subsets[[i]]
+  group_name <- names(OG_feature_subsets)[i]
+
+  if (length(features_i) > 1) {
+    x_train <- as.matrix(x_OG[,features_i])
+    y_train <- as.factor(y_OG)
+    ### choose the lambda
+    lambda.enet <- lambda.enet_OG.list[[i]]
+    OG.classifier <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+    OG.prediction <- predict(OG.classifier, newx=as.matrix(gene_by_feature_mat[,features_i]), s=lambda.enet, type="response")
+  
+    OG.np_0.01 <- mean(np.lr_enet(x=x_train, y=y_OG, alpha=0.01, delta=0.1, lambda=lambda.enet))
+  } else {
+    data_train <- data.frame(x=as.matrix(x_OG[, features_i]), y=y_OG)
+    data_test <- data.frame(x=as.matrix(gene_by_feature_mat[,features_i]))
+    OG.classifier <- glm(y~., family=binomial(), data=data_train)
+    OG.prediction <- predict(OG.classifier, newdata=data_test, type="response")
+    
+    OG.np_0.01 <- mean(np.lr(data_train=data_train, alpha=0.01, delta=0.1))
+  }
+
+  order.ind <- order(OG.prediction, decreasing=T)
+  OG.prediction <- matrix(OG.prediction[order.ind], ncol=1)
+  rownames(OG.prediction) <- rownames(gene_by_feature_mat)[order.ind]
+  
+  cat(group_name)
+  cat("\n")
+  for (t in c(OG.np_0.01)) {
+    cat("Threshold: ")
+    cat(t)
+    cat("\n")
+    cat("Number of predicted OGs: ")
+    cat(sum(OG.prediction[,1]>=t))
+    cat("\n")
+    OGs.predicted <- rownames(OG.prediction)[OG.prediction[,1]>=t]
+    cat("Number of correctedly predicted training OGs: ")
+    cat(length(intersect(OGs.predicted, OGs)))
+    cat("\n")
+    cat("% of correctedly predicted training OGs: ")
+    cat(length(intersect(OGs.predicted, OGs))/length(OGs))
+    cat("\n")
+    nonOGs.predicted <- rownames(OG.prediction)[OG.prediction[,1]<t]
+    cat("Number of correctedly predicted training NGs: ")
+    cat(length(intersect(nonOGs.predicted, NGs)))
+    cat("\n")
+    cat("% of correctedly predicted training NGs: ")
+    cat(length(intersect(nonOGs.predicted, NGs))/length(NGs))
+    cat("\n\n")
+  }
+  # Write the OG prediction results to a file
+  OG.prediction <- as.data.frame(OG.prediction)
+  colnames(OG.prediction) <- "OG probability"
+  write.csv(x=OG.prediction, quote=F, file=paste0("tables/OG_prediction-lr_enet.", group_name, ".csv"))
+
+  OG.prediction_thre <- OG.prediction[OG.prediction[,1]>=t, , drop=F]
+  write.csv(x=OG.prediction_thre, quote=F, file=paste0("tables/OG_prediction-lr_enet.", group_name, ".FPR=0.01.csv"))
+}
+```
+
+# Cluster features based on their pairwise Pearson correlations
+```{r}
+hclust_results <- hclust(as.dist(1-abs(cor(gene_by_feature_mat))))
+# distribution of the heights at which merges occur
+hist(hclust_results$height)
+## most merges occur at or after height = 0.9, use height = 0.9 to cut the tree
+group_idx <- cutree(hclust_results, h=0.9)
+# display the feature groups
+for (i in 1:length(unique(group_idx))) {
+  cat("Feature group")
+  cat(i)
+  cat("\n")
+  cat(names(group_idx)[group_idx == i], sep="\n")
+  cat("\n\n")
+}
+
+############# TSG prediction ############
+# the PR-AUC values of using all feature groups
+TSG.prauc.all <- rowMeans(cv_TSG_lr.enet)[1]
+# leave one feature group out at a time, report the resulting 5-fold CV PR-AUC values 
+TSG.prauc.loo <- unlist(mclapply(1:length(unique(group_idx)), FUN=function(i) {
+  ### features not in group i
+  features_i <- names(group_idx)[group_idx != i]
+  ### choose the lambda
+  lambda.enet <- cv.glmnet(x=as.matrix(x_TSG[,features_i]), y=as.factor(y_TSG), alpha=0.5, family="binomial", foldid=cv_TSG_idx)$lambda.min
+  ### 5-fold CV
+  mean(sapply(1:K, FUN=function(k) {
+    test_idx <- which(cv_TSG_idx == k)
+    x_train <- as.matrix(x_TSG[-test_idx, features_i])
+    x_test <- as.matrix(x_TSG[test_idx, features_i])
+    y_train <- as.factor(y_TSG[-test_idx])
+    y_test <- y_TSG[test_idx]
+
+    lr_model.orig <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+    lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.enet, type="response")
+    pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+    }))
+}, mc.cores=detectCores()-1))
+# show the reduction
+plot(TSG.prauc.all-TSG.prauc.loo)
+# display the ordered feature groups
+for (i in (1:length(unique(group_idx)))[order(TSG.prauc.loo)]) {
+  cat("Feature group ")
+  cat(i)
+  cat("\t")
+  cat((TSG.prauc.all-TSG.prauc.loo)[i])
+  cat("\n")
+  cat(names(group_idx)[group_idx == i], sep="\n")
+  cat("\n\n")
+}
+TSG.num_top_feature_groups <- sum(TSG.prauc.all-TSG.prauc.loo >= 0.005)
+cat(paste("The top", TSG.num_top_feature_groups, "groups have at least 0.005 reduction in CV AUPRC\n"))
+
+############# OG prediction ############
+# the PR-AUC values of using all feature groups
+OG.prauc.all <- rowMeans(cv_OG_lr.enet)[1]
+# leave one feature group out at a time, report the resulting 5-fold CV PR-AUC values 
+OG.prauc.loo <- unlist(mclapply(1:length(unique(group_idx)), FUN=function(i) {
+  ### features not in group i
+  features_i <- names(group_idx)[group_idx != i]
+  ### choose the lambda
+  lambda.enet <- cv.glmnet(x=as.matrix(x_OG[,features_i]), y=as.factor(y_OG), alpha=0.5, family="binomial", foldid=cv_OG_idx)$lambda.min
+  ### 5-fold CV
+  mean(sapply(1:K, FUN=function(k) {
+    test_idx <- which(cv_OG_idx == k)
+    x_train <- as.matrix(x_OG[-test_idx, features_i])
+    x_test <- as.matrix(x_OG[test_idx, features_i])
+    y_train <- as.factor(y_OG[-test_idx])
+    y_test <- y_OG[test_idx]
+
+    lr_model.orig <- glmnet(x=x_train, y=y_train, alpha=0.5, family="binomial")
+    lr_pred.orig <- predict(lr_model.orig, newx=x_test, s=lambda.enet, type="response")
+    pr.curve(scores.class0=lr_pred.orig, weights.class0=y_test)$auc.integral
+    }))
+}, mc.cores=detectCores()-1))
+# show the reduction
+plot(OG.prauc.all-OG.prauc.loo)
+# display the ordered feature groups
+for (i in (1:length(unique(group_idx)))[order(OG.prauc.loo)]) {
+  cat("Feature group ")
+  cat(i)
+  cat("\t")
+  cat((OG.prauc.all-OG.prauc.loo)[i])
+  cat("\n")
+  cat(names(group_idx)[group_idx == i], sep="\n")
+  cat("\n\n")
+}
+OG.num_top_feature_groups <- sum(OG.prauc.all-OG.prauc.loo >= 0.005)
+cat(paste("The top", OG.num_top_feature_groups, "groups have at least 0.005 reduction in CV AUPRC\n"))
+```
+
+# Mariginally rank features with in each of the top three groups for predicting TSGs and each of the top five groups for predicting OGs
+```{r}
+# TSG: 
+TSG.top_feature_groups.filename <- paste0("tables/TSG_top", TSG.num_top_feature_groups, "_feature_groups.txt")
+for (i in (1:length(unique(group_idx)))[order(TSG.prauc.loo)][1:TSG.num_top_feature_groups]) { # top groups
+  features_tmp <- names(group_idx)[group_idx == i]
+  wilcox.pval <- sapply(features_tmp, FUN=function(feature_name) {
+    wilcox.test(x=gene_by_feature_mat[NGs, feature_name], gene_by_feature_mat[TSGs, feature_name])$p.value
+  })
+  feature_order <- order(wilcox.pval)
+  cat("Feature group ", file=TSG.top_feature_groups.filename, append=T)
+  cat(i, file=TSG.top_feature_groups.filename, append=T)
+  cat("\t", file=TSG.top_feature_groups.filename, append=T)
+  cat((TSG.prauc.all-TSG.prauc.loo)[i], file=TSG.top_feature_groups.filename, append=T)
+  cat("\n", file=TSG.top_feature_groups.filename, append=T)
+  for (j in 1:length(features_tmp)) {
+    cat(features_tmp[feature_order][j], file=TSG.top_feature_groups.filename, append=T)
+    cat("\t", file=TSG.top_feature_groups.filename, append=T)
+    cat(wilcox.pval[feature_order][j], file=TSG.top_feature_groups.filename, append=T)
+    cat("\n", file=TSG.top_feature_groups.filename, append=T)
+  }
+  cat("\n", file=TSG.top_feature_groups.filename, append=T)
+}
+
+# OG: 
+OG.top_feature_groups.filename <- paste0("tables/OG_top", OG.num_top_feature_groups, "_feature_groups.txt")
+for (i in (1:length(unique(group_idx)))[order(OG.prauc.loo)][1:OG.num_top_feature_groups]) { # top groups
+  features_tmp <- names(group_idx)[group_idx == i]
+  wilcox.pval <- sapply(features_tmp, FUN=function(feature_name) {
+    wilcox.test(x=gene_by_feature_mat[NGs, feature_name], gene_by_feature_mat[OGs, feature_name])$p.value
+  })
+  feature_order <- order(wilcox.pval)
+  cat("Feature group ", file=OG.top_feature_groups.filename, append=T)
+  cat(i, file=OG.top_feature_groups.filename, append=T)
+  cat("\t", file=OG.top_feature_groups.filename, append=T)
+  cat((OG.prauc.all-OG.prauc.loo)[i], file=OG.top_feature_groups.filename, append=T)
+  cat("\n", file=OG.top_feature_groups.filename, append=T)
+  for (j in 1:length(features_tmp)) {
+    cat(features_tmp[feature_order][j], file=OG.top_feature_groups.filename, append=T)
+    cat("\t", file=OG.top_feature_groups.filename, append=T)
+    cat(wilcox.pval[feature_order][j], file=OG.top_feature_groups.filename, append=T)
+    cat("\n", file=OG.top_feature_groups.filename, append=T)
+  }
+  cat("\n", file=OG.top_feature_groups.filename, append=T)
+}
+```
