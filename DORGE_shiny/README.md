@@ -13,11 +13,11 @@ The advent of the various large-scale Genomics data especially The Cancer Genome
 
 ## System Requirements
 
-This is a R shiny project which has been tested on MacOS and R 3.6.0 but should work on other operating systems and R versions.
+This is a R shiny project which has been tested on MacOS and R 3.6.0 (64 bit only) but should work on other operating systems and R versions.
 
 ## Installation Guide
 
-We provide a website of the Shiny app without installation http://45.12.109.148:3838/DORGE_shiny/.
+We provide a website of the Shiny app without installation http://216.127.179.19:3838/DORGE_shiny/ or http://45.12.109.148:3838/DORGE_shiny/ (be patient, somewhat slow to show).
 
 You can also clone this repo using Git or download the [ZIP file](https://github.com/biocq/DORGE/archive/master.zip) of it.
 
