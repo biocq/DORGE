@@ -26,7 +26,7 @@ git clone https://github.com/biocq/DORGE.git
 ```
 * R software (https://www.r-project.org/) is needed.
 * The codes in [app.R](https://github.com/biocq/DORGE/blob/master/app.R) are the Shiny codes used for the [web viewer].
-* Please change the path of the folder that contains the files and set the path in app.R to the actual path, for example: setwd("/your_home_directory/DORGE/DORGE_shiny").
+* Please change the path of the folder that contains the files and set the path in app.R to the actual path, for example: setwd("/your_home_directory/DORGE/DORGE_shiny"). Double check the permissions of the files in the DORGE_shiny folder if you fail to launch the app in Linux system.
 * If you find this website is helpful, you can use the code for your own projects. The list of dependencies is found at the top of the [app.R] file.
 
 ## Shiny app illustration
