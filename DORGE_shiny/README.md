@@ -17,7 +17,7 @@ This is a R shiny project which has been tested on MacOS and R 3.6.0 (64 bit onl
 
 ## Installation Guide
 
-We provide a demo website of the Shiny app without installation at http://216.127.179.19:3838/DORGE_shiny/ or http://45.12.109.148:3838/DORGE_shiny/ (be patient, somewhat slow to show).
+We provide a demo website of the Shiny app without installation at http://216.127.179.19:3838/DORGE_shiny/ (be patient, somewhat slow to show).
 
 You can also clone this repo using Git or download the [ZIP file](https://github.com/biocq/DORGE/archive/master.zip) of it.
 
