@@ -28,7 +28,7 @@ options(warn=-1)
 
 rm(list = ls(), envir = environment())
 
-#setwd("/Users/jlyu/Box Sync/TSGOG_Project/SA_sub/github/DORGE_paper/DORGE_shiny")
+# setwd("/srv/shiny-server/DORGE_shiny/")
 
 # Make an empty Google analytics file (for dev version - not for production)
 if (!file.exists('google-analytics.js'))
@@ -79,7 +79,7 @@ H3K4me3_peak_table <- fread(H3K4me3Filename,sep='\t',header=T,stringsAsFactors=T
 H3K4me3_sample_info_table <- fread(H3K4me3_sample_info,sep='\t',header=T,stringsAsFactors=TRUE)
 canyon_table <- fread(canyonFilename,sep='\t',header=T,stringsAsFactors=TRUE)
 TCGAgeneexpression_table <- fread(TCGAgeneexpressionFilename,sep='\t',header=T,stringsAsFactors=TRUE)
-CCLEgeneexpression_table <- fread(CCLEgeneexpressionFilename,sep='\t',header=T,stringsAsFactors=TRUE)
+CCLEgeneexpression_table <- fread('data/CCLE_RNASeq_matrix_melt.txt',sep='\t',header=T,stringsAsFactors=TRUE)
 CCLE_sample_info_table <- fread(CCLEsampleannotationFilename,sep='\t',header=T,stringsAsFactors=TRUE)
 CCLEgeneexpression_table_with_sample_info<-join(CCLEgeneexpression_table, CCLE_sample_info_table,type = "left",by="Sample_ID")
 
