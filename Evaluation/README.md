@@ -13,7 +13,7 @@ Java SDK: Sun Java SE Development Kit 7 or higher (Links of JDK 8 https://www.or
 
 As a convenience way, Bioconda users may also try 'conda install -c bioconda java-jdk' to install Java easily.
 
-## Steps
+## Contents
 
 1a. Exon BED file generation
 ```
