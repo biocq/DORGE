@@ -168,27 +168,8 @@ cd ..
   
   Output: oncolnc_all_genes.txt #(HR and related P-value information for all genes; Place at Figure_3/data in the DORGE_Codes project)
   
-  
-5. shRNA data processing.
-```
-cd shRNA
-javac -cp commons-math3-3.6.1.jar shRNA_median_dependency_score.java
-java -cp commons-math3-3.6.1.jar:. shRNA_median_dependency_score
-cd ..
-```
 
-  Input: DORGE_prediction.txt #(DORGE prediction results)
-	
-	Input: Achilles_v2.4.5.rnai.gct #(Achilles shRNA screening data, downloaded from DepMap)
-	
-	Input: Gene_set_new.txt #(Gene annotation information used by this study)
-
-  Input: ensembl_synonymous_to_symbol.txt #(Gene alias conversion to HGNC gene names)
-  
-	Output: shRNA_cell_proliferation_rates.txt #(Median cell proliferation rate data for genome-wide genes; Place at Figure_3/data in the DORGE_Codes project)
-
-
-6. Drug Gene Budger (DGB) data processing.
+5. Drug Gene Budger (DGB) data processing.
 ```
 cd DGB
 javac -cp ../OncoLnc/poi-3.14-20160307.jar:../OncoLnc/poi-ooxml-3.14-20160307.jar:../OncoLnc/poi-ooxml-schemas-3.14-20160307.jar:../OncoLnc/xmlbeans-2.6.0.jar DGB_processing.java
@@ -211,7 +192,7 @@ cd ..
   Output: DGB_creeds_upregulated_simplified.txt #(Flatted file from xlsx files, only records with upregulated TSGs and Q-value < 0.05 are kept; For multiple records in same gene and drug relationship, only the first record is kept; Place at Figure_4/data/DGB in the DORGE_Codes project)
 
 
-7. ATAC-seq data processing.
+6. ATAC-seq data processing.
 ```
 cd ATAC_seq
 javac ATACseq_prepare.java
@@ -228,7 +209,7 @@ cd ..
   Output: pan_cancer_ATACseq_peaks_processed.txt #(ATAC-seq normalized Peak Scores for genome-wide genes)
   
   
-8. Epigenetic regulator gene compilation
+7. Epigenetic regulator gene compilation
 ```
 cd Epigenetic_regulators
 javac Epigenetic_regulator_combination.java
